@@ -26,11 +26,11 @@ try {
 
 // ------------------------------------------------------------------
 // URL del bus SOAP.
-// ÚNICO lugar donde se define. Si renombras o mueves la carpeta del
-// proyecto en htdocs, cambia SOLO la línea de BUS_URL.
+// Proyecto ubicado en: C:\xampp\htdocs\Clinicaprueba1\Parcial-3-ING-III
+// Si algún día mueves o renombras esa carpeta, cambia SOLO esta línea.
 // ------------------------------------------------------------------
 if (!defined('BUS_URL')) {
-    define('BUS_URL', 'http://localhost/Clinicaprueba1/Bus.php');
+    define('BUS_URL', 'http://localhost/Clinicaprueba1/Parcial-3-ING-III/Bus.php');
 }
 if (!defined('BUS_URI')) {
     define('BUS_URI', 'urn:busclinica');
