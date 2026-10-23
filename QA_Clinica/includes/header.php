@@ -10,7 +10,7 @@ $subtitulo_pagina = isset($subtitulo_pagina) ? $subtitulo_pagina : 'Panel de con
 $menu = [
   ['archivo' => 'dashboard.php',          'icono' => '📊', 'texto' => 'Dashboard'],
   ['archivo' => 'casos_prueba.php',       'icono' => '📋', 'texto' => 'Casos de prueba'],
-  ['archivo' => 'matriz_equivalencia.php','icono' => '▶️', 'texto' => 'Matriz de Equivalencia'],
+  ['archivo' => 'matriz_equivalencia.php','icono' => '▶️', 'texto' => 'Matriz de Clases de Equivalencia'],
   ['archivo' => '#',                      'icono' => '🧪', 'texto' => 'Técnicas de testing'],
   ['archivo' => 'plan_pruebas.php',       'icono' => '🗓️', 'texto' => 'Plan de pruebas'],
   ['archivo' => 'registro_incidentes.php','icono' => '🐞', 'texto' => 'Registro de incidentes'],
