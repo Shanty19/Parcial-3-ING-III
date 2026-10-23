@@ -18,6 +18,7 @@ require_once __DIR__ . '/config.php';   // define BUS_URL y BUS_URI
 $BUS_URL = BUS_URL;
 $BUS_URI = BUS_URI;
 
+ini_set('default_socket_timeout', 5);
 $cliente = new SoapClient(null, [
     'location'   => $BUS_URL,
     'uri'        => $BUS_URI,

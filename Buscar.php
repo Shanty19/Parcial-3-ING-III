@@ -15,6 +15,7 @@ $mensaje = '';
 $tipoMensaje = '';
 $seBusco = isset($_GET['criterio']);
 
+ini_set('default_socket_timeout', 5);
 $cliente = new SoapClient(null, [
     'location'   => $BUS_URL,
     'uri'        => $BUS_URI,

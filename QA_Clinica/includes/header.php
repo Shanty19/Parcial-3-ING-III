@@ -66,7 +66,7 @@ $menu = [
   </nav>
 
   <div class="menu-pie">
-    <a href="#"><span class="menu-icono">🚪</span>Cerrar sesión</a>
+    <a href="../logout.php"><span class="menu-icono">🚪</span>Cerrar sesión</a>
   </div>
 </aside>
 

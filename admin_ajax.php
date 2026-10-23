@@ -20,6 +20,7 @@ $BUS_URI = BUS_URI;
 $accion = $_POST['accion'] ?? '';
 
 try {
+    ini_set('default_socket_timeout', 5);
     $cliente = new SoapClient(null, [
         'location'   => $BUS_URL,
         'uri'        => $BUS_URI,

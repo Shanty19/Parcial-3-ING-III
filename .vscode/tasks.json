@@ -15,6 +15,36 @@
         "panel": "dedicated",
         "clear": true
       },
+      "problemMatcher": []
+    },
+    {
+      "label": "Servir Clinica (PHP en localhost:8001)",
+      "detail": "Levanta el servidor PHP integrado del bus SOAP en el puerto 8001",
+      "type": "shell",
+      "command": "C:\\xampp\\php\\php.exe",
+      "args": ["-S", "localhost:8001", "-t", "."],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Servir Clinica (app + bus)",
+      "dependsOn": [
+        "Servir Clinica (PHP en localhost:8000)",
+        "Servir Clinica (PHP en localhost:8001)"
+      ],
+      "dependsOrder": "parallel",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      },
       "group": {
         "kind": "build",
         "isDefault": true
