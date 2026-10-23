@@ -1012,3 +1012,25 @@ footer {
     font-size: 0.78rem;
     border-radius: 6px;
 }
+
+/* Forzar la ocultación del scroll en cualquier elemento contenedor del menú o aside */
+aside *, 
+.sidebar *, 
+#sidebar *, 
+nav *,
+div[class*="sidebar"] *,
+div[class*="menu"] * {
+    -ms-overflow-style: none !important;  /* Internet Explorer 10+ */
+    scrollbar-width: none !important;     /* Firefox */
+}
+
+aside::-webkit-scrollbar, 
+.sidebar::-webkit-scrollbar, 
+#sidebar::-webkit-scrollbar,
+nav::-webkit-scrollbar,
+div[class*="sidebar"]::-webkit-scrollbar,
+div[class*="menu"]::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+}
