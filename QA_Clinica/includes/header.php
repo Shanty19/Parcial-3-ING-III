@@ -3,18 +3,18 @@
 $pagina_actual = basename($_SERVER['PHP_SELF']);
 
 // Valores por defecto (cada página puede definirlos antes de incluir este archivo)
-$titulo_pagina    = isset($titulo_pagina) ? $titulo_pagina : 'Dashboard del Tester';
+$titulo_pagina     = isset($titulo_pagina) ? $titulo_pagina : 'Dashboard del Tester';
 $subtitulo_pagina = isset($subtitulo_pagina) ? $subtitulo_pagina : 'Panel de control de calidad del software';
 
-// Opciones del menú lateral. (Actualizado: Casos de prueba ya apunta a su archivo correspondiente)
+// Opciones del menú lateral actualizadas con los archivos correspondientes
 $menu = [
-  ['archivo' => 'dashboard.php', 'icono' => '📊', 'texto' => 'Dashboard'],
-  ['archivo' => 'casos_prueba.php', 'icono' => '📋', 'texto' => 'Casos de prueba'],
-  ['archivo' => '#',             'icono' => '▶️', 'texto' => 'Ejecutar pruebas'],
-  ['archivo' => '#',             'icono' => '🧪', 'texto' => 'Técnicas de testing'],
-  ['archivo' => '#',             'icono' => '🗓️', 'texto' => 'Plan de pruebas'],
-  ['archivo' => '#',             'icono' => '🐞', 'texto' => 'Registro de incidentes'],
-  ['archivo' => '#',             'icono' => '📁', 'texto' => 'Portafolio de evidencias'],
+  ['archivo' => 'dashboard.php',          'icono' => '📊', 'texto' => 'Dashboard'],
+  ['archivo' => 'casos_prueba.php',       'icono' => '📋', 'texto' => 'Casos de prueba'],
+  ['archivo' => 'matriz_equivalencia.php','icono' => '▶️', 'texto' => 'Matriz de Equivalencia'],
+  ['archivo' => '#',                      'icono' => '🧪', 'texto' => 'Técnicas de testing'],
+  ['archivo' => 'plan_pruebas.php',       'icono' => '🗓️', 'texto' => 'Plan de pruebas'],
+  ['archivo' => 'registro_incidentes.php','icono' => '🐞', 'texto' => 'Registro de incidentes'],
+  ['archivo' => 'portafolio_evidencias.php','icono' => '📁', 'texto' => 'Portafolio de evidencias'],
 ];
 ?>
 <!DOCTYPE html>
@@ -86,4 +86,5 @@ $menu = [
     </div>
   </header>
 
-  <main class="contenido"></main>
+  <!-- Nota importante: El tag <main class="contenido"> se eliminaba aquí provocando conflicto de etiquetas, 
+       por lo que tus páginas individuales (como matriz_equivalencia.php) ya controlan su propio contenido limpio -->
