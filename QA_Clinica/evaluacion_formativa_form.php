@@ -70,7 +70,7 @@ include 'includes/header.php';
 </div>
 
 <div style="background: white; border-radius: 8px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-    <form action="evaluacion_formativa_acciones.php" method="POST">
+    <form action="evaluacion_formativa_acciones.php" method="POST" enctype="multipart/form-data">
         <input type="hidden" name="action" value="save">
         <input type="hidden" name="id" value="<?php echo htmlspecialchars($id ?? ''); ?>">
 
@@ -147,6 +147,16 @@ include 'includes/header.php';
             </div>
         </div>
 
+        <div style="margin: 24px 0;">
+            <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #475569; margin-bottom: 6px;">Evidencias</label>
+            <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 16px;">
+                <input type="file" id="evidenciasInput" name="evidencias[]" accept=".png,.jpg,.jpeg,image/png,image/jpeg" multiple style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; background: white;">
+                <small style="display: block; margin-top: 8px; color: #64748b;">Formatos permitidos: PNG, JPG y JPEG. Puede adjuntar una o varias imágenes.</small>
+                <input type="hidden" name="evidencias_actuales" id="evidenciasActuales" value='<?php echo json_encode(!empty($eval['evidencia']) ? (json_decode($eval['evidencia'], true) ?: [$eval['evidencia']]) : [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>'>
+                <div id="evidenciasPreview" style="display: flex; flex-wrap: wrap; gap: 12px; margin-top: 16px;"></div>
+            </div>
+        </div>
+
         <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px;">
             <a href="evaluacion_formativa.php" style="background: #f1f5f9; color: #475569; padding: 10px 18px; border-radius: 6px; text-decoration: none; font-weight: 600;">Cancelar</a>
             <button type="submit" style="background: #3b82f6; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: 600; cursor: pointer;">Guardar Evaluación</button>
@@ -155,6 +165,94 @@ include 'includes/header.php';
 </div>
 
 <script>
+(function () {
+    const input = document.getElementById('evidenciasInput');
+    const preview = document.getElementById('evidenciasPreview');
+    const hidden = document.getElementById('evidenciasActuales');
+    const allowedMimeTypes = ['image/png', 'image/jpeg'];
+    const state = [];
+
+    const existingItems = <?php $decoded = !empty($eval['evidencia']) ? json_decode($eval['evidencia'], true) : []; echo json_encode(is_array($decoded) ? $decoded : (!empty($eval['evidencia']) ? [$eval['evidencia']] : []), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>;
+    existingItems.forEach((path) => {
+        if (path) {
+            state.push({ type: 'existing', source: path, name: path.split('/').pop(), file: null });
+        }
+    });
+
+    function syncHidden() {
+        hidden.value = JSON.stringify(state.filter(item => item.type === 'existing').map(item => item.source));
+    }
+    function refreshInputFiles() {
+        const dt = new DataTransfer();
+        state.filter(item => item.type === 'new').forEach(item => item.file && dt.items.add(item.file));
+        input.files = dt.files;
+    }
+    function renderPreview() {
+        preview.innerHTML = '';
+        state.forEach((item, index) => {
+            const wrapper = document.createElement('div');
+            wrapper.style.width = '170px';
+            wrapper.style.border = '1px solid #e2e8f0';
+            wrapper.style.borderRadius = '8px';
+            wrapper.style.padding = '8px';
+            wrapper.style.background = '#fff';
+
+            const img = document.createElement('img');
+            const src = item.source.startsWith('http') ? item.source : '../' + item.source.replace(/^\/+/, '');
+            img.src = src;
+            img.alt = item.name;
+            img.style.width = '100%';
+            img.style.height = '120px';
+            img.style.objectFit = 'cover';
+            img.style.borderRadius = '6px';
+            img.style.display = 'block';
+            img.style.border = '1px solid #e2e8f0';
+
+            const label = document.createElement('div');
+            label.style.marginTop = '8px';
+            label.style.fontSize = '0.75rem';
+            label.style.color = '#475569';
+            label.style.wordBreak = 'break-word';
+            label.textContent = item.name;
+
+            const removeBtn = document.createElement('button');
+            removeBtn.type = 'button';
+            removeBtn.textContent = 'Eliminar';
+            removeBtn.style.marginTop = '8px';
+            removeBtn.style.width = '100%';
+            removeBtn.style.border = '1px solid #ef4444';
+            removeBtn.style.borderRadius = '6px';
+            removeBtn.style.background = '#fff';
+            removeBtn.style.color = '#b91c1c';
+            removeBtn.style.cursor = 'pointer';
+            removeBtn.addEventListener('click', function () {
+                state.splice(index, 1); syncHidden(); refreshInputFiles(); renderPreview();
+            });
+
+            wrapper.appendChild(img); wrapper.appendChild(label); wrapper.appendChild(removeBtn); preview.appendChild(wrapper);
+        });
+    }
+
+    input.addEventListener('change', function () {
+        const files = Array.from(this.files || []);
+        const validFiles = [];
+        files.forEach((file) => {
+            const extOk = /\.(png|jpe?g)$/i.test(file.name);
+            const typeOk = allowedMimeTypes.includes(file.type);
+            if (!extOk || !typeOk) {
+                alert('Solo se permiten archivos PNG, JPG o JPEG.');
+                return;
+            }
+            validFiles.push(file);
+        });
+        validFiles.forEach((file) => state.push({ type: 'new', source: URL.createObjectURL(file), name: file.name, file }));
+        this.value = '';
+        syncHidden(); refreshInputFiles(); renderPreview();
+    });
+
+    syncHidden(); renderPreview();
+})();
+
 function toggleEvaluado() {
     const tipo = document.getElementById('tipo_eval').value;
     const inputEvaluado = document.getElementById('input_evaluado');

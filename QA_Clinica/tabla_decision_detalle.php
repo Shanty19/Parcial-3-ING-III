@@ -22,6 +22,18 @@ $stmt_reglas = $pdo->prepare("SELECT * FROM qa_td_reglas_detalle WHERE tabla_id 
 $stmt_reglas->execute([$id]);
 $reglas = $stmt_reglas->fetchAll(PDO::FETCH_ASSOC);
 
+$evidencias = [];
+if (!empty($tabla['evidencia'])) {
+    $decoded = json_decode($tabla['evidencia'], true);
+    if (is_array($decoded)) {
+        $evidencias = array_values(array_filter(array_map('strval', $decoded), function ($valor) {
+            return trim($valor) !== '';
+        }));
+    } elseif (is_string($tabla['evidencia']) && trim($tabla['evidencia']) !== '') {
+        $evidencias = [trim($tabla['evidencia'])];
+    }
+}
+
 $titulo_pagina = 'Detalle de Tabla - ' . $tabla['codigo_tabla'];
 $subtitulo_pagina = 'Matriz de decisión, condiciones y ejecución de reglas.';
 $pdf_export_data = [
@@ -68,6 +80,21 @@ include 'includes/header.php';
         </span>
     </p>
 </div>
+
+<?php if (!empty($evidencias)): ?>
+<div style="background: white; border-radius: 8px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 24px;">
+    <h3 style="margin-top: 0; font-size: 1.1rem; color: #0f172a; margin-bottom: 16px;">Evidencias</h3>
+    <div style="display: flex; flex-wrap: wrap; gap: 16px;">
+        <?php foreach ($evidencias as $evidencia): ?>
+            <?php $src = preg_match('/^https?:\/\//i', $evidencia) ? $evidencia : '../' . ltrim($evidencia, '/'); ?>
+            <div style="width: 180px; border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px; background: #f8fafc;">
+                <img src="<?php echo htmlspecialchars($src); ?>" alt="Evidencia" style="width: 100%; height: 140px; object-fit: cover; border-radius: 6px; border: 1px solid #e2e8f0; display: block;">
+                <div style="margin-top: 8px; font-size: 0.75rem; color: #475569; word-break: break-word;"><?php echo htmlspecialchars(basename($evidencia)); ?></div>
+            </div>
+        <?php endforeach; ?>
+    </div>
+</div>
+<?php endif; ?>
 
 <!-- Matriz de Decisión y Evaluación de Reglas -->
 <div style="background: white; border-radius: 8px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">

@@ -223,7 +223,7 @@ try {
             <h3 id="modalFormTitle" style="margin: 0; font-size: 1.1rem; color: #1e293b;"><i class="fa-solid fa-vials"></i> Nuevo caso de prueba</h3>
             <button type="button" onclick="closeModal('modalForm')" style="background: none; border: none; font-size: 1.4rem; cursor: pointer; color: #64748b;">&times;</button>
         </div>
-        <form action="casos_prueba_acciones.php" method="POST" style="display: flex; flex-direction: column; height: 100%; overflow: hidden;">
+        <form action="casos_prueba_acciones.php" method="POST" enctype="multipart/form-data" style="display: flex; flex-direction: column; height: 100%; overflow: hidden;">
             <input type="hidden" name="action" value="save">
             <input type="hidden" name="id" id="caseId">
             <div style="padding: 16px 20px; overflow-y: auto; flex-grow: 1; max-height: calc(92vh - 120px);">
@@ -292,6 +292,16 @@ try {
                     <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 4px; color: #475569;">Resultado esperado *</label>
                     <textarea name="resultado_esperado" id="caseExpected" rows="2" required style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box;"></textarea>
                 </div>
+
+                <div style="margin-bottom: 12px;">
+                    <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 4px; color: #475569;">Evidencias</label>
+                    <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 12px;">
+                        <input type="file" id="evidenciasInput" name="evidencias[]" accept=".png,.jpg,.jpeg,image/png,image/jpeg" multiple style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; background: white;">
+                        <small style="display: block; margin-top: 8px; color: #64748b;">Formatos permitidos: PNG, JPG y JPEG. Puede adjuntar una o varias imágenes.</small>
+                        <input type="hidden" name="evidencias_actuales" id="evidenciasActuales" value='[]'>
+                        <div id="evidenciasPreview" style="display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px;"></div>
+                    </div>
+                </div>
             </div>
             <div style="padding: 12px 20px; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 12px; background-color: #f8fafc; flex-shrink: 0;">
                 <button type="button" onclick="closeModal('modalForm')" style="background: #e2e8f0; color: #334155; padding: 8px 16px; border-radius: 6px; border: none; font-weight: 600; cursor: pointer;">Cancelar</button>
@@ -303,6 +313,7 @@ try {
 
 <script>
 function openNewModal() {
+    caseEvidenceState = [];
     document.getElementById('caseId').value = '';
     document.getElementById('caseCode').value = '<?php echo $proximo_codigo; ?>';
     document.getElementById('caseName').value = '';
@@ -311,11 +322,15 @@ function openNewModal() {
     document.getElementById('caseTestData').value = '';
     document.getElementById('caseSteps').value = '';
     document.getElementById('caseExpected').value = '';
+    document.getElementById('evidenciasActuales').value = '[]';
+    document.getElementById('evidenciasInput').value = '';
+    document.getElementById('evidenciasPreview').innerHTML = '';
     document.getElementById('modalFormTitle').innerHTML = '<i class="fa-solid fa-vials"></i> Nuevo caso de prueba';
     document.getElementById('modalForm').style.display = 'flex';
 }
 
 function openEditModal(tc) {
+    caseEvidenceState = [];
     document.getElementById('caseId').value = tc.id;
     document.getElementById('caseCode').value = tc.codigo;
     document.getElementById('caseName').value = tc.nombre_caso;
@@ -327,6 +342,43 @@ function openEditModal(tc) {
     document.getElementById('caseTestData').value = tc.datos_prueba || '';
     document.getElementById('caseSteps').value = tc.pasos;
     document.getElementById('caseExpected').value = tc.resultado_esperado;
+    let evidencias = [];
+    if (tc.evidencia) {
+        try {
+            evidencias = JSON.parse(tc.evidencia);
+        } catch (error) {
+            evidencias = [tc.evidencia];
+        }
+    }
+    if (!Array.isArray(evidencias)) {
+        evidencias = [evidencias];
+    }
+    document.getElementById('evidenciasActuales').value = JSON.stringify(evidencias);
+    const previewBox = document.getElementById('evidenciasPreview');
+    previewBox.innerHTML = '';
+    evidencias.forEach((ruta) => {
+        if (!ruta) return;
+        const wrapper = document.createElement('div');
+        wrapper.style.width = '170px';
+        wrapper.style.border = '1px solid #e2e8f0';
+        wrapper.style.borderRadius = '8px';
+        wrapper.style.padding = '8px';
+        wrapper.style.background = '#fff';
+        const img = document.createElement('img');
+        img.src = '../' + ruta.replace(/^\/+/, '');
+        img.style.width = '100%';
+        img.style.height = '120px';
+        img.style.objectFit = 'cover';
+        img.style.borderRadius = '6px';
+        img.alt = 'Evidencia';
+        const label = document.createElement('div');
+        label.style.marginTop = '8px';
+        label.style.fontSize = '0.75rem';
+        label.style.color = '#475569';
+        label.style.wordBreak = 'break-word';
+        label.textContent = ruta.split('/').pop();
+        wrapper.appendChild(img); wrapper.appendChild(label); previewBox.appendChild(wrapper);
+    });
     document.getElementById('modalFormTitle').innerHTML = '<i class="fa-solid fa-pen-to-square"></i> Editar caso: ' + tc.codigo;
     document.getElementById('modalForm').style.display = 'flex';
 }
@@ -334,6 +386,87 @@ function openEditModal(tc) {
 function closeModal(modalId) {
     document.getElementById(modalId).style.display = 'none';
 }
+
+let caseEvidenceState = [];
+(function () {
+    const input = document.getElementById('evidenciasInput');
+    const preview = document.getElementById('evidenciasPreview');
+    const hidden = document.getElementById('evidenciasActuales');
+    const allowedMimeTypes = ['image/png', 'image/jpeg'];
+
+    function syncHidden() {
+        hidden.value = JSON.stringify(caseEvidenceState.filter(item => item.type === 'existing').map(item => item.source));
+    }
+    function refreshInputFiles() {
+        const dt = new DataTransfer();
+        caseEvidenceState.filter(item => item.type === 'new').forEach(item => item.file && dt.items.add(item.file));
+        input.files = dt.files;
+    }
+    function renderPreview() {
+        preview.innerHTML = '';
+        caseEvidenceState.forEach((item, index) => {
+            const wrapper = document.createElement('div');
+            wrapper.style.width = '170px';
+            wrapper.style.border = '1px solid #e2e8f0';
+            wrapper.style.borderRadius = '8px';
+            wrapper.style.padding = '8px';
+            wrapper.style.background = '#fff';
+
+            const img = document.createElement('img');
+            const src = item.source.startsWith('http') ? item.source : '../' + item.source.replace(/^\/+/, '');
+            img.src = src;
+            img.alt = item.name;
+            img.style.width = '100%';
+            img.style.height = '120px';
+            img.style.objectFit = 'cover';
+            img.style.borderRadius = '6px';
+            img.style.display = 'block';
+            img.style.border = '1px solid #e2e8f0';
+
+            const label = document.createElement('div');
+            label.style.marginTop = '8px';
+            label.style.fontSize = '0.75rem';
+            label.style.color = '#475569';
+            label.style.wordBreak = 'break-word';
+            label.textContent = item.name;
+
+            const removeBtn = document.createElement('button');
+            removeBtn.type = 'button';
+            removeBtn.textContent = 'Eliminar';
+            removeBtn.style.marginTop = '8px';
+            removeBtn.style.width = '100%';
+            removeBtn.style.border = '1px solid #ef4444';
+            removeBtn.style.borderRadius = '6px';
+            removeBtn.style.background = '#fff';
+            removeBtn.style.color = '#b91c1c';
+            removeBtn.style.cursor = 'pointer';
+            removeBtn.addEventListener('click', function () {
+                caseEvidenceState.splice(index, 1); syncHidden(); refreshInputFiles(); renderPreview();
+            });
+
+            wrapper.appendChild(img); wrapper.appendChild(label); wrapper.appendChild(removeBtn); preview.appendChild(wrapper);
+        });
+    }
+
+    input.addEventListener('change', function () {
+        const files = Array.from(this.files || []);
+        const validFiles = [];
+        files.forEach((file) => {
+            const extOk = /\.(png|jpe?g)$/i.test(file.name);
+            const typeOk = allowedMimeTypes.includes(file.type);
+            if (!extOk || !typeOk) {
+                alert('Solo se permiten archivos PNG, JPG o JPEG.');
+                return;
+            }
+            validFiles.push(file);
+        });
+        validFiles.forEach((file) => caseEvidenceState.push({ type: 'new', source: URL.createObjectURL(file), name: file.name, file }));
+        this.value = '';
+        syncHidden(); refreshInputFiles(); renderPreview();
+    });
+
+    syncHidden(); renderPreview();
+})();
 </script>
 
 <?php include 'includes/footer.php'; ?>

@@ -19,6 +19,17 @@ if (!$eval) {
 
 $criterios = json_decode($eval['criterios_json'], true) ?? [];
 $preguntas = json_decode($eval['preguntas_json'], true) ?? [];
+$evidencias = [];
+if (!empty($eval['evidencia'])) {
+    $decoded = json_decode($eval['evidencia'], true);
+    if (is_array($decoded)) {
+        $evidencias = array_values(array_filter(array_map('strval', $decoded), function ($valor) {
+            return trim($valor) !== '';
+        }));
+    } elseif (is_string($eval['evidencia']) && trim($eval['evidencia']) !== '') {
+        $evidencias = [trim($eval['evidencia'])];
+    }
+}
 
 $titulo_pagina = 'Resultados - ' . $eval['codigo_evaluacion'];
 $subtitulo_pagina = 'Desglose de calificaciones formativas y reflexiones.';
@@ -99,6 +110,21 @@ include 'includes/header.php';
         <?php endforeach; ?>
     </div>
 </div>
+
+<?php if (!empty($evidencias)): ?>
+<div style="background: white; border-radius: 8px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-top: 24px;">
+    <h3 style="margin-top: 0; font-size: 1.1rem; color: #0f172a; margin-bottom: 16px;">Evidencias</h3>
+    <div style="display: flex; flex-wrap: wrap; gap: 16px;">
+        <?php foreach ($evidencias as $evidencia): ?>
+            <?php $src = preg_match('/^https?:\/\//i', $evidencia) ? $evidencia : '../' . ltrim($evidencia, '/'); ?>
+            <div style="width: 180px;">
+                <img src="<?php echo htmlspecialchars($src); ?>" alt="Evidencia" style="width: 100%; height: 140px; object-fit: cover; border-radius: 6px; border: 1px solid #e2e8f0; display: block;">
+                <div style="margin-top: 8px; font-size: 0.75rem; color: #475569; word-break: break-word;"><?php echo htmlspecialchars(basename($evidencia)); ?></div>
+            </div>
+        <?php endforeach; ?>
+    </div>
+</div>
+<?php endif; ?>
 
 <script>
 window.pdfData = <?php echo json_encode($pdf_export_data, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>;

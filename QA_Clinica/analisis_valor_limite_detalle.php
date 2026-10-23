@@ -21,6 +21,18 @@ if (!$analisis) {
 $min = $analisis['valor_minimo'];
 $max = $analisis['valor_maximo'];
 
+$evidencias = [];
+if (!empty($analisis['evidencia'])) {
+    $decoded = json_decode($analisis['evidencia'], true);
+    if (is_array($decoded)) {
+        $evidencias = array_values(array_filter(array_map('strval', $decoded), function ($valor) {
+            return trim($valor) !== '';
+        }));
+    } elseif (is_string($analisis['evidencia']) && trim($analisis['evidencia']) !== '') {
+        $evidencias = [trim($analisis['evidencia'])];
+    }
+}
+
 $titulo_pagina = 'Detalle de Análisis - ' . $analisis['codigo_analisis'];
 $subtitulo_pagina = 'Desglose de valores límite y casos de prueba evaluados.';
 $pdf_export_data = [
@@ -81,6 +93,27 @@ include 'includes/header.php';
             </div>
         </div>
     </div>
+
+    <?php if (!empty($evidencias)): ?>
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-light">
+            <h5 class="mb-0">Evidencias</h5>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <?php foreach ($evidencias as $evidencia): ?>
+                    <?php $src = preg_match('/^https?:\/\//i', $evidencia) ? $evidencia : '../' . ltrim($evidencia, '/'); ?>
+                    <div class="col-md-3">
+                        <div class="border rounded p-2 bg-light">
+                            <img src="<?php echo htmlspecialchars($src); ?>" alt="Evidencia" style="width: 100%; height: 180px; object-fit: cover; border-radius: 6px; border: 1px solid #e2e8f0;">
+                            <div class="small mt-2 text-break"><?php echo htmlspecialchars(basename($evidencia)); ?></div>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+        </div>
+    </div>
+    <?php endif; ?>
 
     <!-- Tabla de Aplicación de la Técnica de Valor Límite -->
     <div class="card shadow-sm">
