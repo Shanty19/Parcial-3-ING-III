@@ -1,8 +1,98 @@
 <?php
 $titulo_pestana    = "Cobertura de Caja Blanca";
 $titulo_pagina     = "Cobertura de Caja Blanca";
-$subtitulo_pagina  = "Técnicas de testing · Análisis de cobertura de código, ramas y decisiones";
+$subtitulo_pagina  = "Técnicas de testing · Análisis de cobertura";
 include 'includes/header.php';
+
+$host     = 'localhost';
+$dbname   = 'clinica_db';
+$username = 'root';
+$password = '';
+
+try {
+    $pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8mb4", $username, $password);
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+} catch (PDOException $e) {
+    die("Error de conexión: " . $e->getMessage());
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion'])) {
+    // ESTO NOS DIRÁ EXACTAMENTE QUÉ DATOS ESTÁN VIAJANDO DESDE EL FORMULARIO:
+    echo "<pre style='background:#111; color:#0f0; padding:20px; z-index:99999; position:relative;'>";
+    print_r($_POST);
+    echo "</pre>";
+    exit;
+}
+
+
+// Procesar formulario por POST (Guardar o Eliminar)
+$mensaje_alerta = "";
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion'])) {
+    if ($_POST['accion'] === 'guardar') {
+        try {
+            $editId               = $_POST['editId'] ?? '';
+            $code                 = $_POST['code'];
+            $module               = $_POST['module'];
+            $functionName         = $_POST['functionName'];
+            $coverageCriterion    = $_POST['coverageCriterion'];
+            $cyclomaticComplexity = intval($_POST['cyclomaticComplexity']);
+            $totalStatements      = intval($_POST['totalStatements']);
+            $executedStatements   = intval($_POST['executedStatements']);
+            
+            // Cálculo seguro del porcentaje
+            $coveragePercent      = ($totalStatements > 0) ? min(100, round(($executedStatements / $totalStatements) * 100)) : 0;
+            
+            $codeSnippet          = $_POST['codeSnippet'];
+            $observations         = $_POST['observations'] ?? '';
+
+            if (!empty($editId)) {
+                $stmt = $pdo->prepare("UPDATE cobertura_caja_blanca SET modulo = ?, nombre_funcion = ?, criterio_cobertura = ?, complejidad_ciclomatica = ?, total_sentencias = ?, sentencias_ejecutadas = ?, porcentaje_cobertura = ?, pseudocodigo = ?, observaciones = ? WHERE id = ?");
+                $stmt->execute([$module, $functionName, $coverageCriterion, $cyclomaticComplexity, $totalStatements, $executedStatements, $coveragePercent, $codeSnippet, $observations, $editId]);
+            } else {
+                $stmt = $pdo->prepare("INSERT INTO cobertura_caja_blanca (codigo, modulo, nombre_funcion, criterio_cobertura, complejidad_ciclomatica, total_sentencias, sentencias_ejecutadas, porcentaje_cobertura, pseudocodigo, observaciones) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                $stmt->execute([$code, $module, $functionName, $coverageCriterion, $cyclomaticComplexity, $totalStatements, $executedStatements, $coveragePercent, $codeSnippet, $observations]);
+            }
+
+            echo "<script>window.location.href='cobertura_caja_blanca.php';</script>";
+            exit;
+        } catch (Exception $e) {
+            $mensaje_alerta = "Error al guardar en la base de datos: " . $e->getMessage();
+        }
+    } elseif ($_POST['accion'] === 'eliminar') {
+        $idEliminar = $_POST['id'] ?? '';
+        if (!empty($idEliminar)) {
+            $stmt = $pdo->prepare("DELETE FROM cobertura_caja_blanca WHERE id = ?");
+            $stmt->execute([$idEliminar]);
+            echo "<script>window.location.href='cobertura_caja_blanca.php';</script>";
+            exit;
+        }
+    }
+}
+
+// Consultar registros desde la Base de Datos
+$analysesFromDB = [];
+try {
+    $stmt = $pdo->query("SELECT * FROM cobertura_caja_blanca ORDER BY id DESC");
+    $registros = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    foreach ($registros as $r) {
+        $analysesFromDB[] = [
+            'id'                   => $r['id'],
+            'code'                 => $r['codigo'],
+            'module'               => $r['modulo'],
+            'functionName'         => $r['nombre_funcion'],
+            'coverageCriterion'    => $r['criterio_cobertura'],
+            'cyclomaticComplexity' => intval($r['complejidad_ciclomatica']),
+            'totalStatements'      => intval($r['total_sentencias']),
+            'executedStatements'   => intval($r['sentencias_ejecutadas']),
+            'coveragePercent'      => intval($r['porcentaje_cobertura']),
+            'codeSnippet'          => $r['pseudocodigo'],
+            'observations'         => $r['observaciones']
+        ];
+    }
+} catch (Exception $e) {
+    $analysesFromDB = [];
+}
 ?>
 
 <!-- Estilos específicos para Cobertura de Caja Blanca -->
@@ -335,6 +425,12 @@ tbody tr:hover {
 
 <div class="main-content-inner">
 
+    <?php if (!empty($mensaje_alerta)): ?>
+        <div style="background: #ffe5e5; color: #b52e35; padding: 15px; border-radius: 6px; margin-bottom: 20px;">
+            <?= htmlspecialchars($mensaje_alerta) ?>
+        </div>
+    <?php endif; ?>
+
     <header class="page-header">
         <div>
             <h1>Análisis de Cobertura de Caja Blanca</h1>
@@ -363,7 +459,7 @@ tbody tr:hover {
         </div>
 
         <div class="stat-card">
-            <div class="stat-label">Caminos Lógicos Probandos</div>
+            <div class="stat-label">Caminos Lógicos Probados</div>
             <div class="stat-number" id="totalCaminos">0</div>
         </div>
     </section>
@@ -432,20 +528,21 @@ tbody tr:hover {
         </div>
 
         <div class="modal-body">
-            <form id="analysisForm">
-                <input type="hidden" id="editId">
+            <form id="analysisForm" method="POST" action="cobertura_caja_blanca.php">
+                <input type="hidden" name="accion" value="guardar">
+                <input type="hidden" id="editId" name="editId">
 
                 <div class="form-grid">
                     <h3 class="section-title">Datos del Componente / Código</h3>
 
                     <div class="field">
                         <label for="code">Código</label>
-                        <input id="code" readonly>
+                        <input id="code" name="code" readonly>
                     </div>
 
                     <div class="field">
                         <label for="module">Módulo del sistema *</label>
-                        <select id="module" required>
+                        <select id="module" name="module" required>
                             <option value="">Seleccionar módulo</option>
                             <option>Gestión de pacientes</option>
                             <option>Facturación e historial</option>
@@ -458,12 +555,12 @@ tbody tr:hover {
 
                     <div class="field full">
                         <label for="functionName">Nombre del archivo / Función / Método evaluado *</label>
-                        <input id="functionName" required maxlength="150" placeholder="Ej. PacienteController::calcularDescuento()">
+                        <input id="functionName" name="functionName" required maxlength="150" placeholder="Ej. PacienteController::calcularDescuento()">
                     </div>
 
                     <div class="field">
                         <label for="coverageCriterion">Criterio de Cobertura Evaluado *</label>
-                        <select id="coverageCriterion" required>
+                        <select id="coverageCriterion" name="coverageCriterion" required>
                             <option value="Cobertura de Sentencias (Statement)">Cobertura de Sentencias (Statement)</option>
                             <option value="Cobertura de Decisiones / Ramas (Branch)">Cobertura de Decisiones / Ramas (Branch)</option>
                             <option value="Cobertura de Condiciones (Condition)">Cobertura de Condiciones (Condition)</option>
@@ -473,19 +570,19 @@ tbody tr:hover {
 
                     <div class="field">
                         <label for="cyclomaticComplexity">Complejidad Ciclomática (V(G)) *</label>
-                        <input type="number" id="cyclomaticComplexity" min="1" required placeholder="Ej. 4">
+                        <input type="number" id="cyclomaticComplexity" name="cyclomaticComplexity" min="1" required placeholder="Ej. 4">
                     </div>
 
                     <h3 class="section-title">Métricas de Ejecución</h3>
 
                     <div class="field">
                         <label for="totalStatements">Total de Sentencias / Líneas *</label>
-                        <input type="number" id="totalStatements" min="1" required placeholder="Ej. 50" oninput="calculatePercentage()">
+                        <input type="number" id="totalStatements" name="totalStatements" min="1" required placeholder="Ej. 50" oninput="calculatePercentage()">
                     </div>
 
                     <div class="field">
                         <label for="executedStatements">Sentencias Ejecutadas por Pruebas *</label>
-                        <input type="number" id="executedStatements" min="0" required placeholder="Ej. 42" oninput="calculatePercentage()">
+                        <input type="number" id="executedStatements" name="executedStatements" min="0" required placeholder="Ej. 42" oninput="calculatePercentage()">
                     </div>
 
                     <div class="field full">
@@ -495,12 +592,12 @@ tbody tr:hover {
 
                     <div class="field full">
                         <label for="codeSnippet">Pseudocódigo o Rutas Críticas Analizadas *</label>
-                        <textarea id="codeSnippet" required placeholder="Describe las ramas 'if-else', bucles o condiciones principales probadas."></textarea>
+                        <textarea id="codeSnippet" name="codeSnippet" required placeholder="Describe las ramas 'if-else', bucles o condiciones principales probadas."></textarea>
                     </div>
 
                     <div class="field full">
                         <label for="observations">Observaciones y Recomendaciones</label>
-                        <textarea id="observations" placeholder="Detalla áreas no alcanzadas por la prueba o sugerencias de refactorización."></textarea>
+                        <textarea id="observations" name="observations" placeholder="Detalla áreas no alcanzadas por la prueba o sugerencias de refactorización."></textarea>
                     </div>
                 </div>
 
@@ -513,23 +610,14 @@ tbody tr:hover {
     </div>
 </div>
 
+<!-- Formulario oculto para eliminar -->
+<form id="deleteForm" method="POST" action="cobertura_caja_blanca.php" style="display:none;">
+    <input type="hidden" name="accion" value="eliminar">
+    <input type="hidden" name="id" id="deleteId">
+</form>
+
 <script>
-const STORAGE_KEY = 'qa_clinica_caja_blanca_v1';
-
-let analyses = loadAnalyses();
-
-function loadAnalyses() {
-    try {
-        const data = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-        return Array.isArray(data) ? data : [];
-    } catch (error) {
-        return [];
-    }
-}
-
-function persist() {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(analyses));
-}
+const analyses = <?= json_encode($analysesFromDB); ?>;
 
 function escapeHTML(value) {
     return String(value ?? '').replace(/[&<>"']/g, char => ({
@@ -566,7 +654,7 @@ function openModal(id = null) {
     document.getElementById('editId').value = '';
 
     if (id !== null) {
-        const item = analyses.find(a => a.id === id);
+        const item = analyses.find(a => String(a.id) === String(id));
         if (!item) return;
 
         document.getElementById('modalTitle').textContent = 'Editar análisis de caja blanca';
@@ -595,52 +683,6 @@ function closeModal() {
     document.getElementById('analysisModal').classList.remove('open');
     document.body.style.overflow = '';
 }
-
-document.getElementById('analysisForm').addEventListener('submit', event => {
-    event.preventDefault();
-
-    const total = parseInt(document.getElementById('totalStatements').value, 10);
-    const executed = parseInt(document.getElementById('executedStatements').value, 10);
-
-    if (executed > total) {
-        alert('Las sentencias ejecutadas no pueden superar al total de sentencias.');
-        return;
-    }
-
-    const percent = Math.min(100, Math.round((executed / total) * 100));
-    const editId = document.getElementById('editId').value;
-
-    const item = {
-        id: editId || (window.crypto && crypto.randomUUID ? crypto.randomUUID() : String(Date.now())),
-        code: document.getElementById('code').value,
-        module: document.getElementById('module').value,
-        functionName: document.getElementById('functionName').value.trim(),
-        coverageCriterion: document.getElementById('coverageCriterion').value,
-        cyclomaticComplexity: parseInt(document.getElementById('cyclomaticComplexity').value, 10),
-        totalStatements: total,
-        executedStatements: executed,
-        coveragePercent: percent,
-        codeSnippet: document.getElementById('codeSnippet').value.trim(),
-        observations: document.getElementById('observations').value.trim(),
-        updatedAt: new Date().toISOString()
-    };
-
-    if (editId) {
-        analyses = analyses.map(a => a.id === editId ? item : a);
-    } else {
-        analyses.push(item);
-    }
-
-    try {
-        persist();
-    } catch (error) {
-        alert('No se pudieron guardar los datos en el almacenamiento.');
-        return;
-    }
-
-    closeModal();
-    renderTable();
-});
 
 function renderTable() {
     const search = document.getElementById('search').value.trim().toLowerCase();
@@ -677,7 +719,7 @@ function renderTable() {
                         </div>
                         <strong>${item.coveragePercent}%</strong>
                     </td>
-                    <td><span class="badge ${badgeClass}">${item.coveragePercent >= 80 ? 'Optimo' : (item.coveragePercent >= 50 ? 'Aceptable' : 'Critico')}</span></td>
+                    <td><span class="badge ${badgeClass}">${item.coveragePercent >= 80 ? 'Óptimo' : (item.coveragePercent >= 50 ? 'Aceptable' : 'Crítico')}</span></td>
                     <td>
                         <div class="actions">
                             <button class="action-btn" type="button" onclick="viewAnalysis('${item.id}')">Ver</button>
@@ -714,7 +756,7 @@ function updateStats() {
 }
 
 function viewAnalysis(id) {
-    const item = analyses.find(a => a.id === id);
+    const item = analyses.find(a => String(a.id) === String(id));
     if (!item) return;
 
     const details = [
@@ -735,18 +777,13 @@ function viewAnalysis(id) {
 }
 
 function deleteAnalysis(id) {
-    const item = analyses.find(a => a.id === id);
+    const item = analyses.find(a => String(a.id) === String(id));
     if (!item) return;
 
     if (!confirm(`¿Eliminar el análisis ${item.code}? Esta acción no se puede deshacer.`)) return;
 
-    analyses = analyses.filter(a => a.id !== id);
-    try {
-        persist();
-        renderTable();
-    } catch (error) {
-        alert('No se pudo actualizar el almacenamiento.');
-    }
+    document.getElementById('deleteId').value = id;
+    document.getElementById('deleteForm').submit();
 }
 
 function clearFilters() {
