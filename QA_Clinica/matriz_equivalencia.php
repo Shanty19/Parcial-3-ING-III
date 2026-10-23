@@ -768,22 +768,8 @@ function updateStats() {
 }
 
 function viewAnalysis(id) {
-    const item = analyses.find(a => String(a.id) === String(id));
-    if (!item) return;
-
-    const details = [
-        `Código: ${item.code}`,
-        `Nombre: ${item.name}`,
-        `Módulo: ${item.module}`,
-        `Campo: ${item.fieldName}`,
-        `Regla: ${item.rule}`,
-        '',
-        'CLASES DE EQUIVALENCIA:',
-        ...item.classes.map((c, i) => `${i + 1}. ${c.name} (${c.type})\nDato: ${c.data}\nResultado esperado: ${c.expected}`),
-        '',
-        `Observaciones: ${item.observations || 'Sin observaciones'}`
-    ];
-    alert(details.join('\n'));
+    if (!id) return;
+    window.location.href = 'matriz_equivalencia_detalle.php?id=' + encodeURIComponent(id);
 }
 
 function deleteAnalysis(id) {

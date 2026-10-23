@@ -745,23 +745,8 @@ function updateStats() {
 }
 
 function viewRubrica(id) {
-    const item = rubricas.find(r => String(r.id) === String(id));
-    if (!item) return;
-
-    const criteria = item.criteria || [];
-    const totalPoints = criteria.reduce((sum, c) => sum + c.points, 0);
-
-    const details = [
-        `Código: ${item.code}`,
-        `Título: ${item.title}`,
-        `Módulo: ${item.module}`,
-        `Descripción: ${item.description}`,
-        `Puntaje Máximo Total: ${totalPoints} pts`,
-        '',
-        'CRITERIOS DE EVALUACIÓN:',
-        ...criteria.map((c, i) => `${i + 1}. ${c.desc} (${c.points} pts)`)
-    ];
-    alert(details.join('\n'));
+    if (!id) return;
+    window.location.href = 'rubrica_evaluacion_detalle.php?id=' + encodeURIComponent(id);
 }
 
 function deleteRubrica(id) {

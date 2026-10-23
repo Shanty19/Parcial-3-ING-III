@@ -747,24 +747,8 @@ function updateStats() {
 }
 
 function viewAnalysis(id) {
-    const item = analyses.find(a => String(a.id) === String(id));
-    if (!item) return;
-
-    const details = [
-        `Código: ${item.code}`,
-        `Módulo: ${item.module}`,
-        `Función/Método: ${item.functionName}`,
-        `Criterio: ${item.coverageCriterion}`,
-        `Complejidad Ciclomática (V(G)): ${item.cyclomaticComplexity}`,
-        `Sentencias Ejecutadas: ${item.executedStatements} de ${item.totalStatements}`,
-        `Cobertura Calculada: ${item.coveragePercent}%`,
-        '',
-        'PSEUDOCÓDIGO / RUTAS PROBADAS:',
-        item.codeSnippet,
-        '',
-        `Observaciones: ${item.observations || 'Sin observaciones'}`
-    ];
-    alert(details.join('\n'));
+    if (!id) return;
+    window.location.href = 'cobertura_caja_blanca_detalle.php?id=' + encodeURIComponent(id);
 }
 
 function deleteAnalysis(id) {

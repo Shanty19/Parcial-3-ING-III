@@ -682,21 +682,8 @@ function updateStats() {
 }
 
 function viewEvidence(id) {
-    const item = evidences.find(e => String(e.id) === String(id));
-    if (!item) return;
-
-    const details = [
-        `Código: ${item.code}`,
-        `Título: ${item.title}`,
-        `Módulo: ${item.module}`,
-        `Tipo: ${item.evidenceType}`,
-        `Fase de Prueba: ${item.testPhase}`,
-        `Enlace: ${item.fileUrl}`,
-        `Descripción: ${item.description}`,
-        '',
-        `Observaciones: ${item.observations || 'Sin observaciones'}`
-    ];
-    alert(details.join('\n'));
+    if (!id) return;
+    window.location.href = 'portafolio_evidencias_detalle.php?id=' + encodeURIComponent(id);
 }
 
 function deleteEvidence(id) {

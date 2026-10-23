@@ -694,25 +694,8 @@ function updateStats() {
 }
 
 function viewIncident(id) {
-    const item = incidents.find(i => String(i.id) === String(id));
-    if (!item) return;
-
-    const details = [
-        `Código: ${item.code}`,
-        `Título: ${item.titleIncident}`,
-        `Módulo: ${item.module}`,
-        `Severidad: ${item.severity}`,
-        `Estado: ${item.status}`,
-        '',
-        `Pasos para reproducir:\n${item.stepsToReproduce}`,
-        '',
-        `Resultado Esperado:\n${item.expectedResult}`,
-        '',
-        `Resultado Obtenido:\n${item.obtainedResult}`,
-        '',
-        `Observaciones: ${item.observations || 'Sin observaciones'}`
-    ];
-    alert(details.join('\n'));
+    if (!id) return;
+    window.location.href = 'registro_incidentes_detalle.php?id=' + encodeURIComponent(id);
 }
 
 function deleteIncident(id) {
