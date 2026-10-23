@@ -16,15 +16,6 @@ try {
     die("Error de conexión: " . $e->getMessage());
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion'])) {
-    // ESTO NOS DIRÁ EXACTAMENTE QUÉ DATOS ESTÁN VIAJANDO DESDE EL FORMULARIO:
-    echo "<pre style='background:#111; color:#0f0; padding:20px; z-index:99999; position:relative;'>";
-    print_r($_POST);
-    echo "</pre>";
-    exit;
-}
-
-
 // Procesar formulario por POST (Guardar o Eliminar)
 $mensaje_alerta = "";
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion'])) {
