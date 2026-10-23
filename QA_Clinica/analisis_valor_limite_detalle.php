@@ -1,0 +1,120 @@
+<?php
+session_start();
+require_once(__DIR__ . '/../config.php');
+
+$id = $_GET['id'] ?? null;
+if (!$id) {
+    header('Location: analisis_valor_limite.php');
+    exit;
+}
+
+$stmt = $pdo->prepare("SELECT * FROM qa_analisis_valor_limite WHERE id = ?");
+$stmt->execute([$id]);
+$analisis = $stmt->fetch(PDO::FETCH_ASSOC);
+
+if (!$analisis) {
+    header('Location: analisis_valor_limite.php');
+    exit;
+}
+
+// Generar o consultar valores de prueba límite automáticos de caja negra
+$min = $analisis['valor_minimo'];
+$max = $analisis['valor_maximo'];
+
+$titulo_pagina = 'Detalle de Análisis - ' . $analisis['codigo_analisis'];
+$subtitulo_pagina = 'Desglose de valores límite y casos de prueba evaluados.';
+include 'includes/header.php';
+?>
+
+<div class="container-fluid px-4 py-3">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Detalle del Análisis: <?php echo htmlspecialchars($analisis['codigo_analisis']); ?></h2>
+        <div>
+            <a href="analisis_valor_limite_form.php?id=<?php echo $analisis['id']; ?>" class="btn btn-warning text-white me-2"><i class="fas fa-edit"></i> Editar</a>
+            <a href="analisis_valor_limite.php" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Volver</a>
+        </div>
+    </div>
+
+    <!-- Tarjeta de Información General -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-light">
+            <h5 class="mb-0">Información General</h5>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-4"><strong>Módulo:</strong> <?php echo htmlspecialchars($analisis['modulo']); ?></div>
+                <div class="col-md-4"><strong>Campo Evaluado:</strong> <code><?php echo htmlspecialchars($analisis['campo_evaluado']); ?></code></div>
+                <div class="col-md-4"><strong>Tipo de Dato:</strong> <?php echo htmlspecialchars($analisis['tipo_dato']); ?></div>
+                <div class="col-md-4"><strong>Valor Mínimo:</strong> <?php echo htmlspecialchars($min !== '' ? $min : 'No aplica'); ?></div>
+                <div class="col-md-4"><strong>Valor Máximo:</strong> <?php echo htmlspecialchars($max !== '' ? $max : 'No aplica'); ?></div>
+                <div class="col-md-4"><strong>Estado General:</strong> 
+                    <span class="badge bg-<?php echo ($analisis['estado']=='Aprobado')?'success':(($analisis['estado']=='Fallido')?'danger':'warning text-dark'); ?>">
+                        <?php echo htmlspecialchars($analisis['estado']); ?>
+                    </span>
+                </div>
+                <div class="col-md-12"><strong>Objetivo:</strong> <?php echo nl2br(htmlspecialchars($analisis['objetivo'])); ?></div>
+                <div class="col-md-6"><strong>Resultado Esperado:</strong> <p class="mb-0"><?php echo nl2br(htmlspecialchars($analisis['resultado_esperado'])); ?></p></div>
+                <div class="col-md-6"><strong>Resultado Obtenido:</strong> <p class="mb-0"><?php echo nl2br(htmlspecialchars($analisis['resultado_obtenido'] ?? 'Sin registrar')); ?></p></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabla de Aplicación de la Técnica de Valor Límite -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Casos de Prueba de Caja Negra (Valores Límite)</h5>
+            <span class="text-muted small">Cálculo basado en rangos mínimo y máximo permitidos</span>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered align-middle">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Caso #</th>
+                            <th>Valor Probado</th>
+                            <th>Clasificación (Caja Negra)</th>
+                            <th>Resultado Esperado</th>
+                            <th>Resultado Obtenido</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php
+                        // Si es numérico con límites válidos, calculamos los 7 puntos clásicos de valor límite
+                        $is_numeric_range = is_numeric($min) && is_numeric($max);
+                        if ($is_numeric_range) {
+                            $min_val = floatval($min);
+                            $max_val = floatval($max);
+                            
+                            $casos_prueba = [
+                                ['num' => 1, 'val' => $min_val - 1, 'class' => 'Inmediatamente inferior al mínimo (Inválido)', 'exp' => 'Error de validación: menor al mínimo'],
+                                ['num' => 2, 'val' => $min_val, 'class' => 'Valor mínimo permitido (Válido)', 'exp' => 'Procesamiento exitoso en el límite inferior'],
+                                ['num' => 3, 'val' => $min_val + 1, 'class' => 'Inmediatamente superior al mínimo (Válido)', 'exp' => 'Procesamiento exitoso'],
+                                ['num' => 4, 'val' => ($min_val + $max_val) / 2, 'class' => 'Valor nominal / intermedio (Válido)', 'exp' => 'Procesamiento exitoso estándar'],
+                                ['num' => 5, 'val' => $max_val - 1, 'class' => 'Inmediatamente inferior al máximo (Válido)', 'exp' => 'Procesamiento exitoso'],
+                                ['num' => 6, 'val' => $max_val, 'class' => 'Valor máximo permitido (Válido)', 'exp' => 'Procesamiento exitoso en el límite superior'],
+                                ['num' => 7, 'val' => $max_val + 1, 'class' => 'Inmediatamente superior al máximo (Inválido)', 'exp' => 'Error de validación: supera el máximo']
+                            ];
+
+                            foreach ($casos_prueba as $cp) {
+                                echo "<tr>";
+                                echo "<td>CP-0" . $cp['num'] . "</td>";
+                                echo "<td><code>" . $cp['val'] . "</code></td>";
+                                echo "<td>" . $cp['class'] . "</td>";
+                                echo "<td>" . $cp['exp'] . "</td>";
+                                echo "<td>" . htmlspecialchars($analisis['resultado_obtenido'] ?: 'Pendiente de ejecución') . "</td>";
+                                echo "<td><span class='badge bg-warning text-dark'>" . htmlspecialchars($analisis['estado']) . "</span></td>";
+                                echo "</tr>";
+                            }
+                        } else {
+                            echo "<tr><td colspan='6' class='text-center text-muted'>Los límites numéricos no están completamente definidos o el campo requiere evaluación de longitud de texto. Revise la definición del campo.</td></tr>";
+                        }
+                        ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<?php include 'includes/footer.php'; ?>
