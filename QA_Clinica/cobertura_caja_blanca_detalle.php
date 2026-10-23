@@ -30,6 +30,27 @@ $pseudocodigo = $item['pseudocodigo'] ?? '';
 
 $titulo_pagina = 'Detalle de Cobertura - ' . $codigo;
 $subtitulo_pagina = 'Análisis de cobertura de caja blanca por función y criterio evaluado.';
+$pdf_export_data = [
+    'title' => 'Detalle de cobertura: ' . $codigo . ' - ' . $nombreFuncion,
+    'subtitle' => 'Módulo: ' . ($modulo ?? '') . ' | Cobertura: ' . ($porcentajeCobertura ?? 0) . '%',
+    'fileName' => 'reporte_cobertura_' . preg_replace('/[^A-Za-z0-9_-]+/', '_', $codigo) . '.pdf',
+    'sections' => [
+        [
+            'title' => 'Información general',
+            'items' => [
+                ['label' => 'Código', 'value' => $codigo],
+                ['label' => 'Nombre de la función', 'value' => $nombreFuncion],
+                ['label' => 'Módulo', 'value' => $modulo],
+                ['label' => 'Criterio de cobertura', 'value' => $criterioCobertura],
+                ['label' => 'Cobertura', 'value' => $porcentajeCobertura . '%'],
+                ['label' => 'Complejidad ciclomática', 'value' => $complejidadCiclomatica],
+                ['label' => 'Sentencias ejecutadas', 'value' => $sentenciasEjecutadas . ' / ' . $totalSentencias],
+                ['label' => 'Observaciones', 'value' => $observaciones ?: 'Sin observaciones'],
+                ['label' => 'Pseudocódigo', 'value' => $pseudocodigo ?: 'Sin pseudocódigo']
+            ]
+        ]
+    ]
+];
 include 'includes/header.php';
 ?>
 
@@ -39,6 +60,7 @@ include 'includes/header.php';
         <p style="margin: 4px 0 0 0; color: #64748b; font-size: 0.9rem;">Módulo: <strong><?php echo htmlspecialchars($modulo); ?></strong> | Cobertura: <strong><?php echo htmlspecialchars($porcentajeCobertura); ?>%</strong></p>
     </div>
     <div>
+        <button type="button" data-export-pdf="true" style="background: #16a34a; color: white; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.9rem; margin-right: 8px;">⬇️ Descargar PDF</button>
         <a href="cobertura_caja_blanca.php" style="background: #64748b; color: white; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 0.9rem;">← Volver</a>
     </div>
 </div>
@@ -74,3 +96,10 @@ include 'includes/header.php';
 <div style="background: white; border-radius: 8px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 24px;">
     <h3 style="margin-top: 0; font-size: 1.1rem; color: #0f172a; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px; margin-bottom: 16px;">Pseudocódigo / rutas probadas</h3>
     <pre style="background: #f8fafc; padding: 16px; border-radius: 6px; border: 1px solid #e2e8f0; font-family: inherit; font-size: 0.9rem; color: #1e293b; white-space: pre-wrap; margin: 0;"><?php echo htmlspecialchars($pseudocodigo); ?></pre>
+</div>
+
+<script>
+window.pdfData = <?php echo json_encode($pdf_export_data, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>;
+</script>
+
+<?php include 'includes/footer.php'; ?>

@@ -20,6 +20,27 @@ if (!$tc) {
 
 $titulo_pagina = 'Detalle de Caso - ' . $tc['codigo'];
 $subtitulo_pagina = 'Visualización integral de la especificación y resultado de la prueba.';
+$pdf_export_data = [
+    'title' => 'Detalle de caso: ' . $tc['codigo'] . ' - ' . $tc['nombre_caso'],
+    'subtitle' => 'Módulo: ' . $tc['modulo'] . ' | Fecha de registro: ' . $tc['fecha_creacion'],
+    'fileName' => 'reporte_caso_' . preg_replace('/[^A-Za-z0-9_-]+/', '_', $tc['codigo']) . '.pdf',
+    'sections' => [
+        [
+            'title' => 'Información general',
+            'items' => [
+                ['label' => 'Código', 'value' => $tc['codigo'] ?? ''],
+                ['label' => 'Nombre del caso', 'value' => $tc['nombre_caso'] ?? ''],
+                ['label' => 'Prioridad', 'value' => $tc['prioridad'] ?? ''],
+                ['label' => 'Estado', 'value' => $tc['estado'] ?? ''],
+                ['label' => 'Objetivo', 'value' => $tc['objetivo'] ?? ''],
+                ['label' => 'Precondiciones', 'value' => $tc['precondiciones'] ?: 'Ninguna'],
+                ['label' => 'Datos de prueba', 'value' => $tc['datos_prueba'] ?: 'No aplica'],
+                ['label' => 'Pasos de ejecución', 'value' => $tc['pasos'] ?? ''],
+                ['label' => 'Resultado esperado', 'value' => $tc['resultado_esperado'] ?? '']
+            ]
+        ]
+    ]
+];
 include 'includes/header.php';
 ?>
 
@@ -29,6 +50,7 @@ include 'includes/header.php';
         <p style="margin: 4px 0 0 0; color: #64748b; font-size: 0.9rem;">Módulo: <strong><?php echo htmlspecialchars($tc['modulo']); ?></strong> | Fecha de registro: <?php echo htmlspecialchars($tc['fecha_creacion']); ?></p>
     </div>
     <div>
+        <button type="button" data-export-pdf="true" style="background: #16a34a; color: white; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.9rem; margin-right: 8px;">⬇️ Descargar PDF</button>
         <a href="casos_prueba.php" style="background: #64748b; color: white; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 0.9rem;">← Volver al listado</a>
     </div>
 </div>
@@ -84,5 +106,9 @@ include 'includes/header.php';
         <?php echo nl2br(htmlspecialchars($tc['resultado_esperado'])); ?>
     </div>
 </div>
+
+<script>
+window.pdfData = <?php echo json_encode($pdf_export_data, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>;
+</script>
 
 <?php include 'includes/footer.php'; ?>

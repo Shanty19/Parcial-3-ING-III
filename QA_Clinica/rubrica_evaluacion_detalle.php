@@ -29,6 +29,23 @@ $descripcion = $item['descripcion'] ?? '';
 
 $titulo_pagina = 'Detalle de Rúbrica - ' . $codigo;
 $subtitulo_pagina = 'Criterios, puntajes y criterios de evaluación del registro seleccionado.';
+$pdf_export_data = [
+    'title' => 'Detalle de rúbrica: ' . $codigo . ' - ' . $tituloRubrica,
+    'subtitle' => 'Módulo: ' . $modulo . ' | Puntaje máximo: ' . $totalPuntaje . ' pts',
+    'fileName' => 'reporte_rubrica_' . preg_replace('/[^A-Za-z0-9_-]+/', '_', $codigo) . '.pdf',
+    'sections' => [
+        [
+            'title' => 'Descripción',
+            'items' => [
+                ['label' => 'Código', 'value' => $codigo],
+                ['label' => 'Título', 'value' => $tituloRubrica],
+                ['label' => 'Módulo', 'value' => $modulo],
+                ['label' => 'Puntaje máximo', 'value' => $totalPuntaje . ' pts'],
+                ['label' => 'Descripción', 'value' => $descripcion ?: 'Sin descripción']
+            ]
+        ]
+    ]
+];
 include 'includes/header.php';
 ?>
 
@@ -38,6 +55,7 @@ include 'includes/header.php';
         <p style="margin: 4px 0 0 0; color: #64748b; font-size: 0.9rem;">Módulo: <strong><?php echo htmlspecialchars($modulo); ?></strong> | Puntaje máximo: <strong><?php echo htmlspecialchars($totalPuntaje); ?> pts</strong></p>
     </div>
     <div>
+        <button type="button" data-export-pdf="true" style="background: #16a34a; color: white; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.9rem; margin-right: 8px;">⬇️ Descargar PDF</button>
         <a href="rubrica_evaluacion.php" style="background: #64748b; color: white; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 0.9rem;">← Volver</a>
     </div>
 </div>
@@ -72,5 +90,9 @@ include 'includes/header.php';
         </table>
     </div>
 </div>
+
+<script>
+window.pdfData = <?php echo json_encode($pdf_export_data, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>;
+</script>
 
 <?php include 'includes/footer.php'; ?>

@@ -23,6 +23,28 @@ $max = $analisis['valor_maximo'];
 
 $titulo_pagina = 'Detalle de Análisis - ' . $analisis['codigo_analisis'];
 $subtitulo_pagina = 'Desglose de valores límite y casos de prueba evaluados.';
+$pdf_export_data = [
+    'title' => 'Detalle de análisis: ' . $analisis['codigo_analisis'],
+    'subtitle' => 'Módulo: ' . ($analisis['modulo'] ?? '') . ' | Rango: ' . ($min !== '' ? $min : 'No aplica') . ' a ' . ($max !== '' ? $max : 'No aplica'),
+    'fileName' => 'reporte_analisis_' . preg_replace('/[^A-Za-z0-9_-]+/', '_', $analisis['codigo_analisis']) . '.pdf',
+    'sections' => [
+        [
+            'title' => 'Información general',
+            'items' => [
+                ['label' => 'Código', 'value' => $analisis['codigo_analisis'] ?? ''],
+                ['label' => 'Módulo', 'value' => $analisis['modulo'] ?? ''],
+                ['label' => 'Campo evaluado', 'value' => $analisis['campo_evaluado'] ?? ''],
+                ['label' => 'Tipo de dato', 'value' => $analisis['tipo_dato'] ?? ''],
+                ['label' => 'Valor mínimo', 'value' => $min !== '' ? $min : 'No aplica'],
+                ['label' => 'Valor máximo', 'value' => $max !== '' ? $max : 'No aplica'],
+                ['label' => 'Estado', 'value' => $analisis['estado'] ?? ''],
+                ['label' => 'Objetivo', 'value' => $analisis['objetivo'] ?? ''],
+                ['label' => 'Resultado esperado', 'value' => $analisis['resultado_esperado'] ?? ''],
+                ['label' => 'Resultado obtenido', 'value' => $analisis['resultado_obtenido'] ?? 'Sin registrar']
+            ]
+        ]
+    ]
+];
 include 'includes/header.php';
 ?>
 
@@ -30,6 +52,7 @@ include 'includes/header.php';
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2>Detalle del Análisis: <?php echo htmlspecialchars($analisis['codigo_analisis']); ?></h2>
         <div>
+            <button type="button" data-export-pdf="true" class="btn btn-success text-white me-2">⬇️ Descargar PDF</button>
             <a href="analisis_valor_limite_form.php?id=<?php echo $analisis['id']; ?>" class="btn btn-warning text-white me-2"><i class="fas fa-edit"></i> Editar</a>
             <a href="analisis_valor_limite.php" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Volver</a>
         </div>
@@ -116,5 +139,9 @@ include 'includes/header.php';
         </div>
     </div>
 </div>
+
+<script>
+window.pdfData = <?php echo json_encode($pdf_export_data, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>;
+</script>
 
 <?php include 'includes/footer.php'; ?>

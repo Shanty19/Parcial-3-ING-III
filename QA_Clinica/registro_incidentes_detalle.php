@@ -29,6 +29,27 @@ $observaciones = $item['observaciones'] ?? '';
 
 $titulo_pagina = 'Detalle de Incidente - ' . $codigo;
 $subtitulo_pagina = 'Seguimiento del incidente y resultados asociados a la corrección.';
+$pdf_export_data = [
+    'title' => 'Detalle de incidente: ' . $codigo . ' - ' . $tituloIncidente,
+    'subtitle' => 'Módulo: ' . $modulo . ' | Severidad: ' . $severidad,
+    'fileName' => 'reporte_incidente_' . preg_replace('/[^A-Za-z0-9_-]+/', '_', $codigo) . '.pdf',
+    'sections' => [
+        [
+            'title' => 'Información del incidente',
+            'items' => [
+                ['label' => 'Código', 'value' => $codigo],
+                ['label' => 'Título', 'value' => $tituloIncidente],
+                ['label' => 'Módulo', 'value' => $modulo],
+                ['label' => 'Severidad', 'value' => $severidad],
+                ['label' => 'Estado', 'value' => $estado],
+                ['label' => 'Pasos para reproducir', 'value' => $pasosReproducir ?: 'No se registraron pasos'],
+                ['label' => 'Resultado esperado', 'value' => $resultadoEsperado ?: 'No definido'],
+                ['label' => 'Resultado obtenido', 'value' => $resultadoObtenido ?: 'No registrado'],
+                ['label' => 'Observaciones', 'value' => $observaciones ?: 'Sin observaciones']
+            ]
+        ]
+    ]
+];
 include 'includes/header.php';
 ?>
 
@@ -38,6 +59,7 @@ include 'includes/header.php';
         <p style="margin: 4px 0 0 0; color: #64748b; font-size: 0.9rem;">Módulo: <strong><?php echo htmlspecialchars($modulo); ?></strong> | Severidad: <strong><?php echo htmlspecialchars($severidad); ?></strong></p>
     </div>
     <div>
+        <button type="button" data-export-pdf="true" style="background: #16a34a; color: white; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.9rem; margin-right: 8px;">⬇️ Descargar PDF</button>
         <a href="registro_incidentes.php" style="background: #64748b; color: white; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 0.9rem;">← Volver</a>
     </div>
 </div>

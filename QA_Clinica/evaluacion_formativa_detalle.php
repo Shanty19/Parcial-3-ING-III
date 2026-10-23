@@ -22,6 +22,24 @@ $preguntas = json_decode($eval['preguntas_json'], true) ?? [];
 
 $titulo_pagina = 'Resultados - ' . $eval['codigo_evaluacion'];
 $subtitulo_pagina = 'Desglose de calificaciones formativas y reflexiones.';
+$pdf_export_data = [
+    'title' => 'Detalle de evaluación: ' . $eval['codigo_evaluacion'] . ' - ' . $eval['tipo_evaluacion'],
+    'subtitle' => 'Evaluador: ' . ($eval['evaluador'] ?? '') . ' | Evaluado: ' . ($eval['integrante_evaluado'] ?? ''),
+    'fileName' => 'reporte_evaluacion_' . preg_replace('/[^A-Za-z0-9_-]+/', '_', $eval['codigo_evaluacion']) . '.pdf',
+    'sections' => [
+        [
+            'title' => 'Resumen general',
+            'items' => [
+                ['label' => 'Código', 'value' => $eval['codigo_evaluacion'] ?? ''],
+                ['label' => 'Tipo de evaluación', 'value' => $eval['tipo_evaluacion'] ?? ''],
+                ['label' => 'Evaluador', 'value' => $eval['evaluador'] ?? ''],
+                ['label' => 'Evaluado', 'value' => $eval['integrante_evaluado'] ?? ''],
+                ['label' => 'Promedio general', 'value' => number_format($eval['promedio_general'], 2) . ' / 5.0'],
+                ['label' => 'Criterios', 'value' => implode(' | ', array_map(fn($nombre, $valor) => $nombre . ': ' . ($valor['nota'] ?? 0) . '/5', array_keys($criterios), array_values($criterios)))]
+            ]
+        ]
+    ]
+];
 include 'includes/header.php';
 ?>
 
@@ -31,6 +49,7 @@ include 'includes/header.php';
         <p style="margin: 4px 0 0 0; color: #64748b; font-size: 0.9rem;">Evaluador: <strong><?php echo htmlspecialchars($eval['evaluador']); ?></strong> | Evaluado: <strong><?php echo htmlspecialchars($eval['integrante_evaluado']); ?></strong></p>
     </div>
     <div>
+        <button type="button" data-export-pdf="true" style="background: #16a34a; color: white; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.9rem; margin-right: 8px;">⬇️ Descargar PDF</button>
         <a href="evaluacion_formativa_form.php?id=<?php echo $eval['id']; ?>" style="background: #d97706; color: white; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 0.9rem; margin-right: 8px;">✏️ Editar</a>
         <a href="evaluacion_formativa.php" style="background: #64748b; color: white; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 0.9rem;">← Volver</a>
     </div>
@@ -80,5 +99,9 @@ include 'includes/header.php';
         <?php endforeach; ?>
     </div>
 </div>
+
+<script>
+window.pdfData = <?php echo json_encode($pdf_export_data, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>;
+</script>
 
 <?php include 'includes/footer.php'; ?>

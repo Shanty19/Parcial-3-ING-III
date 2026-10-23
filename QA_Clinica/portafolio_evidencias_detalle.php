@@ -28,6 +28,26 @@ $observaciones = $item['observaciones'] ?? '';
 
 $titulo_pagina = 'Detalle de Evidencia - ' . $codigo;
 $subtitulo_pagina = 'Información completa de la evidencia registrada para la prueba.';
+$pdf_export_data = [
+    'title' => 'Detalle de evidencia: ' . $codigo . ' - ' . $tituloEvidencia,
+    'subtitle' => 'Módulo: ' . $modulo . ' | Tipo: ' . $tipoEvidencia . ' | Fase: ' . $fasePrueba,
+    'fileName' => 'reporte_evidencia_' . preg_replace('/[^A-Za-z0-9_-]+/', '_', $codigo) . '.pdf',
+    'sections' => [
+        [
+            'title' => 'Información de la evidencia',
+            'items' => [
+                ['label' => 'Código', 'value' => $codigo],
+                ['label' => 'Título', 'value' => $tituloEvidencia],
+                ['label' => 'Módulo', 'value' => $modulo],
+                ['label' => 'Tipo', 'value' => $tipoEvidencia],
+                ['label' => 'Fase de prueba', 'value' => $fasePrueba],
+                ['label' => 'Enlace del recurso', 'value' => $enlaceArchivo ?: 'Sin enlace'],
+                ['label' => 'Descripción', 'value' => $descripcion ?: 'Sin descripción'],
+                ['label' => 'Observaciones', 'value' => $observaciones ?: 'Sin observaciones']
+            ]
+        ]
+    ]
+];
 include 'includes/header.php';
 ?>
 
@@ -37,6 +57,7 @@ include 'includes/header.php';
         <p style="margin: 4px 0 0 0; color: #64748b; font-size: 0.9rem;">Módulo: <strong><?php echo htmlspecialchars($modulo); ?></strong> | Tipo: <strong><?php echo htmlspecialchars($tipoEvidencia); ?></strong></p>
     </div>
     <div>
+        <button type="button" data-export-pdf="true" style="background: #16a34a; color: white; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.9rem; margin-right: 8px;">⬇️ Descargar PDF</button>
         <a href="portafolio_evidencias.php" style="background: #64748b; color: white; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 0.9rem;">← Volver</a>
     </div>
 </div>
@@ -60,4 +81,10 @@ include 'includes/header.php';
     <div style="background: white; border-radius: 8px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
         <h3 style="margin-top: 0; font-size: 1.1rem; color: #0f172a; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px; margin-bottom: 16px;">Observaciones</h3>
         <p style="margin: 0; color: #334155; line-height: 1.6;"><?php echo !empty($observaciones) ? nl2br(htmlspecialchars($observaciones)) : '<span style="color: #94a3b8;">Sin observaciones.</span>'; ?></p>
+    </div>
+</div>
+
+<script>
+window.pdfData = <?php echo json_encode($pdf_export_data, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>;
+</script>
 <?php include 'includes/footer.php'; ?>
