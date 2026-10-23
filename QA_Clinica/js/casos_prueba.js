@@ -191,9 +191,17 @@ function renderTable(casesList) {
             <td style="padding: 12px 16px;">${statusBadge}</td>
             <td style="padding: 12px 16px;">${tc.createdAt || 'N/A'}</td>
             <td style="padding: 12px 16px; text-align: center;">
-                <button onclick="viewCaseDetail('${tc.id}')" style="background:none; border:none; cursor:pointer; color:#0284c7; margin:0 4px;" title="Ver detalle">👁️</button>
-                <button onclick="openEditModal('${tc.id}')" style="background:none; border:none; cursor:pointer; color:#d97706; margin:0 4px;" title="Editar">✏️</button>
-                <button onclick="deleteCase('${tc.id}')" style="background:none; border:none; cursor:pointer; color:#dc2626; margin:0 4px;" title="Eliminar">🗑️</button>
+                <div class="qa-action-group">
+                    <button class="qa-action-btn view" onclick="viewCaseDetail('${tc.id}')" aria-label="Ver registro" title="Ver registro">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>
+                    </button>
+                    <button class="qa-action-btn edit" onclick="openEditModal('${tc.id}')" aria-label="Editar registro" title="Editar registro">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 1 1 3 3L7 19l-4 1 1-4 12.5-12.5Z"/></svg>
+                    </button>
+                    <button class="qa-action-btn delete" onclick="deleteCase('${tc.id}')" aria-label="Eliminar registro" title="Eliminar registro">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M6 6l1 14h10l1-14"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+                    </button>
+                </div>
             </td>
         `;
         tbody.appendChild(tr);

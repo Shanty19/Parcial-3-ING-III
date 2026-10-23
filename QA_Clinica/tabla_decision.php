@@ -151,9 +151,17 @@ try {
                                 </span>
                             </td>
                             <td style="padding: 14px 16px; text-align: center;">
-                                <a href="tabla_decision_detalle.php?id=<?php echo $row['id']; ?>" style="color: #0284c7; text-decoration: none; margin: 0 6px;" title="Ver detalle">👁️</a>
-                                <a href="tabla_decision_form.php?id=<?php echo $row['id']; ?>" style="color: #d97706; text-decoration: none; margin: 0 6px;" title="Editar">✏️</a>
-                                <a href="tabla_decision_acciones.php?action=delete&id=<?php echo $row['id']; ?>" style="color: #dc2626; text-decoration: none; margin: 0 6px;" onclick="return confirm('¿Está seguro de eliminar esta tabla de decisión?');" title="Eliminar">🗑️</a>
+                                <div class="qa-action-group">
+                                    <a href="tabla_decision_detalle.php?id=<?php echo $row['id']; ?>" class="qa-action-btn view" aria-label="Ver registro" title="Ver registro">
+                                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>
+                                    </a>
+                                    <a href="tabla_decision_form.php?id=<?php echo $row['id']; ?>" class="qa-action-btn edit" aria-label="Editar registro" title="Editar registro">
+                                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 1 1 3 3L7 19l-4 1 1-4 12.5-12.5Z"/></svg>
+                                    </a>
+                                    <a href="tabla_decision_acciones.php?action=delete&id=<?php echo $row['id']; ?>" class="qa-action-btn delete" aria-label="Eliminar registro" title="Eliminar registro" onclick="return confirm('¿Está seguro de eliminar esta tabla de decisión?');">
+                                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M6 6l1 14h10l1-14"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+                                    </a>
+                                </div>
                             </td>
                         </tr>
                     <?php endforeach; ?>
