@@ -126,24 +126,52 @@ button, input, select, textarea {
     font: inherit;
 }
 
-.btn-primary {
-    background: var(--blue);
-    color: white;
+.btn-primary,
+.btn-success {
+    background: #0b2545;
+    color: #ffffff;
+    border: 1px solid #0b2545;
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-weight: 700;
+    transition: background 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
 }
 
-.btn-primary:hover {
-    background: #2865ce;
+.btn-primary:hover,
+.btn-success:hover {
+    background: #1c4e80;
+    border-color: #1c4e80;
+    transform: translateY(-1px);
 }
 
+.btn-secondary,
 .btn-light {
     background: #edf2f8;
-    color: var(--text);
+    color: #0b2545;
+    border: 1px solid #d9e2ec;
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-weight: 700;
+}
+
+.btn-secondary:hover,
+.btn-light:hover {
+    background: #dfeaf6;
 }
 
 .btn-danger {
-    background: #fff0f0;
-    color: #c9333b;
-    padding: 8px 11px;
+    background: #fff1f2;
+    color: #c53030;
+    border: 1px solid #f5b8b8;
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-weight: 700;
+}
+
+.btn-danger:hover {
+    background: #c53030;
+    color: #ffffff;
+    border-color: #c53030;
 }
 
 .stats {

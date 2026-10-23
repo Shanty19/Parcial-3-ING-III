@@ -375,29 +375,114 @@ tbody tr:hover { background: var(--gris-fondo); }
   gap: 12px;
 }
 
-.btn {
-  border: none;
+button,
+input[type="button"],
+input[type="submit"],
+.btn,
+.btn-primario,
+.btn-secundario,
+.btn-peligro,
+.btn-eliminar-fila,
+#btn-limpiar-filtro {
   border-radius: 8px;
-  padding: 12px 26px;
+}
+
+.btn,
+.btn-primario,
+.btn-secundario,
+.btn-peligro,
+.btn-eliminar-fila,
+#btn-limpiar-filtro,
+.btn-primary,
+.btn-secondary,
+.btn-light,
+.btn-danger,
+.btn-success,
+.btn-warning {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 10px 16px;
+  border: 1px solid transparent;
   font-size: 14px;
   font-weight: 700;
+  line-height: 1.2;
+  text-decoration: none;
   cursor: pointer;
-  transition: background 0.2s, transform 0.1s;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
 }
 
-.btn-primario {
+.btn:focus-visible,
+button:focus-visible,
+input[type="button"]:focus-visible,
+input[type="submit"]:focus-visible,
+.btn-primary:focus-visible,
+.btn-secondary:focus-visible,
+.btn-light:focus-visible,
+.btn-danger:focus-visible,
+.btn-success:focus-visible,
+.btn-warning:focus-visible {
+  outline: 3px solid rgba(11, 37, 69, 0.14);
+  outline-offset: 2px;
+}
+
+.btn-primario,
+.btn-primary,
+.btn-success {
   background: var(--azul-marino);
   color: var(--blanco);
+  border-color: var(--azul-marino);
+  box-shadow: 0 4px 10px rgba(11, 37, 69, 0.12);
 }
 
-.btn-primario:hover { background: var(--azul-hover); }
+.btn-primario:hover,
+.btn-primary:hover,
+.btn-success:hover {
+  background: var(--azul-hover);
+  border-color: var(--azul-hover);
+  transform: translateY(-1px);
+}
 
-.btn-secundario {
+.btn-secundario,
+.btn-secondary,
+.btn-light {
   background: var(--gris-fondo);
   color: var(--azul-marino);
+  border-color: var(--borde);
 }
 
-.btn-secundario:hover { background: var(--borde); }
+.btn-secundario:hover,
+.btn-secondary:hover,
+.btn-light:hover {
+  background: var(--borde);
+}
+
+.btn-peligro,
+.btn-danger {
+  background: #fff1f2;
+  color: var(--error);
+  border-color: #f5b8b8;
+}
+
+.btn-peligro:hover,
+.btn-danger:hover {
+  background: var(--error);
+  color: var(--blanco);
+  border-color: var(--error);
+}
+
+.btn-warning {
+  background: #fff7e0;
+  color: #9c6b00;
+  border-color: #f9d77d;
+}
+
+.btn-warning:hover {
+  background: #f9d77d;
+  color: #7a5600;
+}
 
 .alerta {
   padding: 14px 18px;
