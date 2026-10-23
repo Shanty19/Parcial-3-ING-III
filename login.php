@@ -97,7 +97,7 @@ include 'includes/header.php';
         <input type="password" id="password" name="password" maxlength="200"
                autocomplete="current-password" required>
       </div>
-
+      
       <div class="acciones">
         <button type="submit" class="btn btn-primario">Entrar</button>
       </div>

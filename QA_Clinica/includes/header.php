@@ -11,7 +11,7 @@ $menu = [
   ['archivo' => 'dashboard.php',          'icono' => '📊', 'texto' => 'Dashboard'],
   ['archivo' => 'casos_prueba.php',       'icono' => '📋', 'texto' => 'Casos de prueba'],
   ['archivo' => 'matriz_equivalencia.php','icono' => '▶️', 'texto' => 'Matriz de Clases de Equivalencia'],
-  ['archivo' => '#',                      'icono' => '🧪', 'texto' => 'Técnicas de testing'],
+  ['archivo' => 'analisis_valor_limite.php', 'icono' => '📈', 'texto' => 'Análisis de valor límite'],
   ['archivo' => 'plan_pruebas.php',       'icono' => '🗓️', 'texto' => 'Plan de pruebas'],
   ['archivo' => 'registro_incidentes.php','icono' => '🐞', 'texto' => 'Registro de incidentes'],
   ['archivo' => 'portafolio_evidencias.php','icono' => '📁', 'texto' => 'Portafolio de evidencias'],
