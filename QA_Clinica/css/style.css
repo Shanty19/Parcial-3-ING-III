@@ -179,9 +179,16 @@ a.btn:focus-visible {
   transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
 }
 
-.qa-action-btn svg {
+.qa-action-btn svg,
+.qa-action-btn i {
   width: 15px;
   height: 15px;
+  font-size: 14px;
+  line-height: 1;
+  display: inline-block;
+}
+
+.qa-action-btn svg {
   stroke: currentColor;
   fill: none;
   stroke-width: 2;

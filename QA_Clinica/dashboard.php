@@ -200,7 +200,7 @@ include 'includes/header.php';
               <td><span class="estado <?= $clase_estado ?>"><?= htmlspecialchars($caso['estado']) ?></span></td>
               <td class="col-accion">
                 <a href="casos_prueba_detalle.php?id=<?= $caso['id'] ?>" class="qa-action-btn view" aria-label="Ver registro" title="Ver registro">
-                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>
+                  <i class="fa-solid fa-eye" aria-hidden="true"></i>
                 </a>
               </td>
             </tr>

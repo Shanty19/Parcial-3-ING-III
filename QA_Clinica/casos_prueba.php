@@ -198,13 +198,13 @@ try {
                             <td style="padding: 14px 16px; text-align: center;">
                                 <div class="qa-action-group">
                                     <button type="button" class="qa-action-btn view" onclick="window.location.href='casos_prueba_detalle.php?id=<?php echo $tc['id']; ?>'" aria-label="Ver registro" title="Ver registro">
-                                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>
+                                        <i class="fa-solid fa-eye" aria-hidden="true"></i>
                                     </button>
                                     <button type="button" class="qa-action-btn edit" onclick="openEditModal(<?php echo htmlspecialchars(json_encode($tc)); ?>)" aria-label="Editar registro" title="Editar registro">
-                                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 1 1 3 3L7 19l-4 1 1-4 12.5-12.5Z"/></svg>
+                                        <i class="fa-solid fa-pen-to-square" aria-hidden="true"></i>
                                     </button>
                                     <a href="casos_prueba_acciones.php?action=delete&id=<?php echo $tc['id']; ?>" class="qa-action-btn delete" aria-label="Eliminar registro" title="Eliminar registro" onclick="return confirm('¿Está seguro de eliminar este caso?');">
-                                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M6 6l1 14h10l1-14"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+                                        <i class="fa-solid fa-trash-can" aria-hidden="true"></i>
                                     </a>
                                 </div>
                             </td>
