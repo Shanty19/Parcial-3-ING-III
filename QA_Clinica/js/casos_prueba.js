@@ -2,7 +2,6 @@
  * Módulo de Gestión de Casos de Prueba - Clínica Salud+ QA
  */
 
-// Casos de demostración predeterminados basados en las funciones reales de Clínica Salud+
 const SEED_TEST_CASES = [
     {
         id: "CP-001",
@@ -11,9 +10,9 @@ const SEED_TEST_CASES = [
         module: "Gestión de pacientes",
         objective: "Verificar que el sistema guarde correctamente la información personal y médica de un paciente en la base de datos.",
         preconditions: "Acceso al módulo de pacientes con credenciales activas.",
-        testData: "Nombre: Carlos Mendoza, Cédula: 8-900-1122, Teléfono: 6789-0123, Email: cmendoza@email.com",
-        steps: "1. Navegar a la sección 'Gestión de pacientes'.\n2. Hacer clic en 'Agregar Paciente'.\n3. Llenar todos los campos obligatorios con los datos de prueba.\n4. Presionar 'Guardar'.",
-        expectedResult: "Muestra mensaje de confirmación y el paciente figura inmediatamente en el listado.",
+        testData: "Nombre: Carlos Mendoza, Cédula: 8-900-1122, Teléfono: 6789-0123",
+        steps: "1. Navegar a la sección 'Gestión de pacientes'.\n2. Hacer clic en 'Agregar Paciente'.\n3. Llenar los campos y guardar.",
+        expectedResult: "Muestra mensaje de confirmación y el paciente figura en el listado.",
         priority: "Alta",
         status: "Pendiente",
         createdAt: "2026-10-20"
@@ -24,67 +23,25 @@ const SEED_TEST_CASES = [
         name: "Búsqueda de paciente por número de cédula",
         module: "Búsqueda de pacientes",
         objective: "Validar la precisión del filtro de búsqueda por cédula registrada.",
-        preconditions: "Debe existir al menos un paciente registrado previamente con cédula 8-900-1122.",
-        testData: "Cédula de búsqueda: 8-900-1122",
-        steps: "1. Ir a la pantalla de Búsqueda de Pacientes.\n2. Escribir '8-900-1122' en el campo de filtro.\n3. Presionar la tecla Enter o pulsar en 'Buscar'.",
-        expectedResult: "El sistema muestra únicamente la ficha coincidente con el paciente Carlos Mendoza.",
+        preconditions: "Existir paciente con cédula 8-900-1122.",
+        testData: "Cédula: 8-900-1122",
+        steps: "1. Ir a Búsqueda de Pacientes.\n2. Escribir la cédula.\n3. Presionar Buscar.",
+        expectedResult: "El sistema muestra la ficha coincidente.",
         priority: "Alta",
         status: "Pendiente",
         createdAt: "2026-10-21"
-    },
-    {
-        id: "CP-003",
-        code: "CP-003",
-        name: "Consulta de catálogo de doctores y especialidades",
-        module: "Consulta de doctores y especialidades",
-        objective: "Comprobar el despliegue del catálogo médico y la disponibilidad por especialidad.",
-        preconditions: "Servicio de datos de doctores disponible.",
-        testData: "Especialidad: Cardiología",
-        steps: "1. Acceder a la vista de doctores.\n2. Seleccionar el filtro de especialidad 'Cardiología'.",
-        expectedResult: "Se listan los médicos pertenecientes a Cardiología con sus horarios.",
-        priority: "Media",
-        status: "Pendiente",
-        createdAt: "2026-10-21"
-    },
-    {
-        id: "CP-004",
-        code: "CP-004",
-        name: "Consumo de servicio web SOAP de aseguradoras",
-        module: "Comunicación con el servicio SOAP",
-        objective: "Verificar la conexión y respuesta XML del cliente de pruebas SOAP de cobertura.",
-        preconditions: "Servidor local/remoto SOAP activo y accesible.",
-        testData: "Código de cliente: 10452, Póliza: POL-2026-X",
-        steps: "1. Ingresar a Cliente_prueba.php.\n2. Seleccionar la transacción SOAP.\n3. Ejecutar petición.",
-        expectedResult: "El Web Service retorna un XML válido con código HTTP 200 OK y estado de póliza Activa.",
-        priority: "Alta",
-        status: "Pendiente",
-        createdAt: "2026-10-22"
-    },
-    {
-        id: "CP-005",
-        code: "CP-005",
-        name: "Persistencia de logs en el historial de búsquedas",
-        module: "Historial de búsquedas",
-        objective: "Confirmar que cada consulta realizada quede registrada en la bitácora del sistema (serviciolog.php).",
-        preconditions: "Haber realizado al menos una búsqueda en el sistema.",
-        testData: "Usuario actual: Tester QA",
-        steps: "1. Ejecutar una consulta de paciente.\n2. Ir a la vista de registros/logs de administración.\n3. Filtrar por la hora actual.",
-        expectedResult: "Se visualiza la entrada de log correspondiente indicando usuario, fecha, hora y parámetros consultados.",
-        priority: "Baja",
-        status: "Pendiente",
-        createdAt: "2026-10-22"
     }
 ];
 
 let testCases = [];
 
+// Inicialización segura cuando el DOM está completamente cargado
 document.addEventListener("DOMContentLoaded", function () {
     loadTestCases();
     setupEventListeners();
     renderAll();
 });
 
-// Carga datos desde LocalStorage o inicializa con los datos de demostración
 function loadTestCases() {
     const stored = localStorage.getItem("salud_qa_test_cases");
     if (stored) {
@@ -104,20 +61,34 @@ function saveToStorage() {
     localStorage.setItem("salud_qa_test_cases", JSON.stringify(testCases));
 }
 
-// Configuración de escuchadores de eventos
 function setupEventListeners() {
-    document.getElementById("btnNewTestCase").addEventListener("click", openNewModal);
-    document.getElementById("testCaseForm").addEventListener("submit", handleFormSubmit);
+    const btnNew = document.getElementById("btnNewTestCase");
+    if (btnNew) {
+        btnNew.addEventListener("click", openNewModal);
+    }
+
+    const form = document.getElementById("testCaseForm");
+    if (form) {
+        form.addEventListener("submit", handleFormSubmit);
+    }
     
     // Filtros
-    document.getElementById("searchInput").addEventListener("input", filterAndRender);
-    document.getElementById("filterModule").addEventListener("change", filterAndRender);
-    document.getElementById("filterStatus").addEventListener("change", filterAndRender);
-    document.getElementById("filterPriority").addEventListener("change", filterAndRender);
-    document.getElementById("btnResetFilters").addEventListener("click", resetFilters);
+    const searchInput = document.getElementById("searchInput");
+    if (searchInput) searchInput.addEventListener("input", filterAndRender);
+
+    const filterModule = document.getElementById("filterModule");
+    if (filterModule) filterModule.addEventListener("change", filterAndRender);
+
+    const filterStatus = document.getElementById("filterStatus");
+    if (filterStatus) filterStatus.addEventListener("change", filterAndRender);
+
+    const filterPriority = document.getElementById("filterPriority");
+    if (filterPriority) filterPriority.addEventListener("change", filterAndRender);
+
+    const btnReset = document.getElementById("btnResetFilters");
+    if (btnReset) btnReset.addEventListener("click", resetFilters);
 }
 
-// Generador de Código consecutivo (CP-001, CP-002, ...)
 function generateNextCode() {
     let maxNum = 0;
     testCases.forEach(tc => {
@@ -128,41 +99,45 @@ function generateNextCode() {
             }
         }
     });
-    const nextNum = maxNum + 1;
-    return "CP-" + String(nextNum).padStart(3, "0");
+    return "CP-" + String(maxNum + 1).padStart(3, "0");
 }
 
-// Renderizado general
 function renderAll() {
     updateMetrics();
     filterAndRender();
 }
 
-// Actualiza las tarjetas de métricas
 function updateMetrics() {
     const total = testCases.length;
     const passed = testCases.filter(c => c.status === "Aprobado").length;
     const failed = testCases.filter(c => c.status === "Fallido").length;
     const pending = testCases.filter(c => c.status === "Pendiente").length;
 
-    document.getElementById("statTotal").textContent = total;
-    document.getElementById("statPassed").textContent = passed;
-    document.getElementById("statFailed").textContent = failed;
-    document.getElementById("statPending").textContent = pending;
+    const elTotal = document.getElementById("statTotal");
+    const elPassed = document.getElementById("statPassed");
+    const elFailed = document.getElementById("statFailed");
+    const elPending = document.getElementById("statPending");
+
+    if (elTotal) elTotal.textContent = total;
+    if (elPassed) elPassed.textContent = passed;
+    if (elFailed) elFailed.textContent = failed;
+    if (elPending) elPending.textContent = pending;
 
     const passedPct = total > 0 ? Math.round((passed / total) * 100) : 0;
     const failedPct = total > 0 ? Math.round((failed / total) * 100) : 0;
 
-    document.getElementById("statPassedPct").textContent = `${passedPct}% del total`;
-    document.getElementById("statFailedPct").textContent = `${failedPct}% del total`;
+    const elPassedPct = document.getElementById("statPassedPct");
+    const elFailedPct = document.getElementById("statFailedPct");
+
+    if (elPassedPct) elPassedPct.textContent = `${passedPct}% del total`;
+    if (elFailedPct) elFailedPct.textContent = `${failedPct}% del total`;
 }
 
-// Filtrado de la tabla
 function filterAndRender() {
-    const searchVal = document.getElementById("searchInput").value.toLowerCase().trim();
-    const moduleVal = document.getElementById("filterModule").value;
-    const statusVal = document.getElementById("filterStatus").value;
-    const priorityVal = document.getElementById("filterPriority").value;
+    const searchVal = document.getElementById("searchInput")?.value.toLowerCase().trim() || "";
+    const moduleVal = document.getElementById("filterModule")?.value || "ALL";
+    const statusVal = document.getElementById("filterStatus")?.value || "ALL";
+    const priorityVal = document.getElementById("filterPriority")?.value || "ALL";
 
     const filtered = testCases.filter(tc => {
         const matchesSearch = tc.code.toLowerCase().includes(searchVal) || tc.name.toLowerCase().includes(searchVal);
@@ -177,23 +152,22 @@ function filterAndRender() {
 }
 
 function resetFilters() {
-    document.getElementById("searchInput").value = "";
-    document.getElementById("filterModule").value = "ALL";
-    document.getElementById("filterStatus").value = "ALL";
-    document.getElementById("filterPriority").value = "ALL";
+    if (document.getElementById("searchInput")) document.getElementById("searchInput").value = "";
+    if (document.getElementById("filterModule")) document.getElementById("filterModule").value = "ALL";
+    if (document.getElementById("filterStatus")) document.getElementById("filterStatus").value = "ALL";
+    if (document.getElementById("filterPriority")) document.getElementById("filterPriority").value = "ALL";
     filterAndRender();
 }
 
-// Renderiza la tabla HTML
 function renderTable(casesList) {
     const tbody = document.getElementById("testCasesTableBody");
+    if (!tbody) return;
     tbody.innerHTML = "";
 
     if (casesList.length === 0) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="7" class="text-center py-4 text-muted">
-                    <i class="fa-solid fa-folder-open" style="font-size: 2rem; margin-bottom: 8px; display: block;"></i>
+                <td colspan="7" style="text-align: center; padding: 24px; color: #94a3b8;">
                     No se encontraron casos de prueba que coincidan con los criterios.
                 </td>
             </tr>
@@ -205,57 +179,39 @@ function renderTable(casesList) {
     casesList.forEach(tc => {
         const tr = document.createElement("tr");
 
-        // Badge para prioridad
-        let priorityBadge = "";
-        if (tc.priority === "Alta") priorityBadge = `<span class="badge badge-danger">Alta</span>`;
-        else if (tc.priority === "Media") priorityBadge = `<span class="badge badge-warning">Media</span>`;
-        else priorityBadge = `<span class="badge badge-secondary">Baja</span>`;
+        let priorityBadge = tc.priority === "Alta" ? `<span style="background:#fee2e2; color:#991b1b; padding:3px 8px; border-radius:10px; font-weight:600; font-size:0.75rem;">Alta</span>` : (tc.priority === "Media" ? `<span style="background:#fef3c7; color:#92400e; padding:3px 8px; border-radius:10px; font-weight:600; font-size:0.75rem;">Media</span>` : `<span style="background:#f3f4f6; color:#4b5563; padding:3px 8px; border-radius:10px; font-weight:600; font-size:0.75rem;">Baja</span>`);
 
-        // Badge para estado
-        let statusBadge = "";
-        if (tc.status === "Aprobado") statusBadge = `<span class="badge badge-success"><i class="fa-solid fa-check"></i> Aprobado</span>`;
-        else if (tc.status === "Fallido") statusBadge = `<span class="badge badge-danger"><i class="fa-solid fa-xmark"></i> Fallido</span>`;
-        else statusBadge = `<span class="badge badge-pending"><i class="fa-solid fa-clock"></i> Pendiente</span>`;
+        let statusBadge = tc.status === "Aprobado" ? `<span style="background:#d1fae5; color:#065f46; padding:3px 8px; border-radius:10px; font-weight:600; font-size:0.75rem;">Aprobado</span>` : (tc.status === "Fallido" ? `<span style="background:#fee2e2; color:#991b1b; padding:3px 8px; border-radius:10px; font-weight:600; font-size:0.75rem;">Fallido</span>` : `<span style="background:#e0f2fe; color:#075985; padding:3px 8px; border-radius:10px; font-weight:600; font-size:0.75rem;">Pendiente</span>`);
 
         tr.innerHTML = `
-            <td><strong>${escapeHtml(tc.code)}</strong></td>
-            <td>${escapeHtml(tc.name)}</td>
-            <td><span class="module-tag">${escapeHtml(tc.module)}</span></td>
-            <td>${priorityBadge}</td>
-            <td>${statusBadge}</td>
-            <td>${tc.createdAt || 'N/A'}</td>
-            <td class="action-buttons text-center">
-                <button class="btn-icon text-blue" title="Ver detalle" onclick="viewCaseDetail('${tc.id}')">
-                    <i class="fa-solid fa-eye"></i>
-                </button>
-                <button class="btn-icon text-orange" title="Editar caso" onclick="openEditModal('${tc.id}')">
-                    <i class="fa-solid fa-pen"></i>
-                </button>
-                <button class="btn-icon text-green" title="Ejecutar prueba" onclick="navigateToExecution('${tc.id}')">
-                    <i class="fa-solid fa-play"></i>
-                </button>
-                <button class="btn-icon text-red" title="Eliminar caso" onclick="deleteCase('${tc.id}')">
-                    <i class="fa-solid fa-trash-can"></i>
-                </button>
+            <td style="padding: 12px 16px; font-weight: 700;">${escapeHtml(tc.code)}</td>
+            <td style="padding: 12px 16px;">${escapeHtml(tc.name)}</td>
+            <td style="padding: 12px 16px;">${escapeHtml(tc.module)}</td>
+            <td style="padding: 12px 16px;">${priorityBadge}</td>
+            <td style="padding: 12px 16px;">${statusBadge}</td>
+            <td style="padding: 12px 16px;">${tc.createdAt || 'N/A'}</td>
+            <td style="padding: 12px 16px; text-align: center;">
+                <button onclick="viewCaseDetail('${tc.id}')" style="background:none; border:none; cursor:pointer; color:#0284c7; margin:0 4px;" title="Ver detalle">👁️</button>
+                <button onclick="openEditModal('${tc.id}')" style="background:none; border:none; cursor:pointer; color:#d97706; margin:0 4px;" title="Editar">✏️</button>
+                <button onclick="deleteCase('${tc.id}')" style="background:none; border:none; cursor:pointer; color:#dc2626; margin:0 4px;" title="Eliminar">🗑️</button>
             </td>
         `;
         tbody.appendChild(tr);
     });
 
-    document.getElementById("tableFooterInfo").textContent = `Mostrando ${casesList.length} de ${testCases.length} casos de prueba registados.`;
+    document.getElementById("tableFooterInfo").textContent = `Mostrando ${casesList.length} de ${testCases.length} casos registrados.`;
 }
 
-// Abrir modal de nuevo caso
-function openNewModal() {
+// Funciones globales accesibles desde los botones onclick del HTML
+window.openNewModal = function() {
     document.getElementById("testCaseForm").reset();
     document.getElementById("caseId").value = "";
     document.getElementById("caseCode").value = generateNextCode();
     document.getElementById("modalFormTitle").innerHTML = `<i class="fa-solid fa-vials"></i> Nuevo caso de prueba`;
     openModal("modalForm");
-}
+};
 
-// Abrir modal de edición
-function openEditModal(caseId) {
+window.openEditModal = function(caseId) {
     const tc = testCases.find(c => c.id === caseId);
     if (!tc) return;
 
@@ -270,11 +226,10 @@ function openEditModal(caseId) {
     document.getElementById("caseSteps").value = tc.steps;
     document.getElementById("caseExpectedResult").value = tc.expectedResult;
 
-    document.getElementById("modalFormTitle").innerHTML = `<i class="fa-solid fa-pen-to-square"></i> Editar caso de prueba: ${tc.code}`;
+    document.getElementById("modalFormTitle").innerHTML = `<i class="fa-solid fa-pen-to-square"></i> Editar caso: ${tc.code}`;
     openModal("modalForm");
-}
+};
 
-// Guardar/Actualizar caso
 function handleFormSubmit(e) {
     e.preventDefault();
 
@@ -290,41 +245,29 @@ function handleFormSubmit(e) {
     const expectedResult = document.getElementById("caseExpectedResult").value.trim();
 
     if (!code || !name || !module || !objective || !steps || !expectedResult) {
-        alert("Por favor complete todos los campos obligatorios del formulario.");
+        alert("Por favor complete todos los campos obligatorios.");
         return;
     }
 
     if (id) {
-        // Edición de caso existente
         const index = testCases.findIndex(c => c.id === id);
         if (index !== -1) {
-            testCases[index] = {
-                ...testCases[index],
-                name,
-                module,
-                priority,
-                objective,
-                preconditions,
-                testData,
-                steps,
-                expectedResult
-            };
+            testCases[index] = { ...testCases[index], name, module, priority, objective, preconditions, testData, steps, expectedResult };
         }
     } else {
-        // Creación de nuevo caso
         const today = new Date().toISOString().split('T')[0];
         const newCase = {
             id: code,
             code: code,
-            name: name,
-            module: module,
-            priority: priority,
-            objective: objective,
-            preconditions: preconditions,
-            testData: testData,
-            steps: steps,
-            expectedResult: expectedResult,
-            status: "Pendiente", // Estado inicial siempre Pendiente
+            name,
+            module,
+            priority,
+            objective,
+            preconditions,
+            testData,
+            steps,
+            expectedResult,
+            status: "Pendiente",
             createdAt: today
         };
         testCases.push(newCase);
@@ -335,47 +278,28 @@ function handleFormSubmit(e) {
     renderAll();
 }
 
-// Ver Detalle
-function viewCaseDetail(caseId) {
+window.viewCaseDetail = function(caseId) {
     const tc = testCases.find(c => c.id === caseId);
     if (!tc) return;
 
-    let priorityBadge = tc.priority === "Alta" ? `<span class="badge badge-danger">Alta</span>` : (tc.priority === "Media" ? `<span class="badge badge-warning">Media</span>` : `<span class="badge badge-secondary">Baja</span>`);
-    let statusBadge = tc.status === "Aprobado" ? `<span class="badge badge-success">Aprobado</span>` : (tc.status === "Fallido" ? `<span class="badge badge-danger">Fallido</span>` : `<span class="badge badge-pending">Pendiente</span>`);
-
     const detailHtml = `
-        <div class="detail-header-block">
-            <div class="detail-code">${escapeHtml(tc.code)}</div>
-            <h2 class="detail-title">${escapeHtml(tc.name)}</h2>
-            <div class="detail-meta">
-                <span><strong>Módulo:</strong> ${escapeHtml(tc.module)}</span> &bull;
-                <span><strong>Prioridad:</strong> ${priorityBadge}</span> &bull;
-                <span><strong>Estado:</strong> ${statusBadge}</span> &bull;
-                <span><strong>Fecha de creación:</strong> ${tc.createdAt || 'N/A'}</span>
-            </div>
+        <div style="margin-bottom: 12px;">
+            <span style="font-weight:700; color:#2563eb;">${escapeHtml(tc.code)}</span>
+            <h3 style="margin:4px 0; font-size:1.2rem;">${escapeHtml(tc.name)}</h3>
+            <p style="color:#64748b; font-size:0.85rem;">Módulo: ${escapeHtml(tc.module)} | Prioridad: ${tc.priority} | Estado: ${tc.status}</p>
         </div>
-        <hr class="divider">
-        <div class="detail-section">
-            <h4><i class="fa-solid fa-bullseye"></i> Objetivo de la prueba</h4>
-            <p>${escapeHtml(tc.objective)}</p>
+        <hr style="border:0; border-top:1px solid #e2e8f0; margin:12px 0;">
+        <div style="margin-bottom:12px;">
+            <h4 style="font-size:0.9rem; color:#475569; margin-bottom:4px;">Objetivo:</h4>
+            <p style="margin:0; font-size:0.9rem;">${escapeHtml(tc.objective)}</p>
         </div>
-        <div class="detail-row">
-            <div class="detail-section col-6">
-                <h4><i class="fa-solid fa-list-check"></i> Precondiciones</h4>
-                <p>${tc.preconditions ? escapeHtml(tc.preconditions) : '<em>Sin precondiciones especificadas.</em>'}</p>
-            </div>
-            <div class="detail-section col-6">
-                <h4><i class="fa-solid fa-database"></i> Datos de prueba</h4>
-                <p>${tc.testData ? escapeHtml(tc.testData) : '<em>Sin datos de prueba específicos.</em>'}</p>
-            </div>
+        <div style="margin-bottom:12px;">
+            <h4 style="font-size:0.9rem; color:#475569; margin-bottom:4px;">Pasos de ejecución:</h4>
+            <pre style="background:#f8fafc; padding:10px; border-radius:6px; font-family:inherit; font-size:0.85rem; white-space:pre-wrap; margin:0;">${escapeHtml(tc.steps)}</pre>
         </div>
-        <div class="detail-section">
-            <h4><i class="fa-solid fa-bars-staggered"></i> Pasos de ejecución</h4>
-            <pre class="steps-box">${escapeHtml(tc.steps)}</pre>
-        </div>
-        <div class="detail-section">
-            <h4><i class="fa-solid fa-circle-check"></i> Resultado esperado</h4>
-            <div class="expected-box">${escapeHtml(tc.expectedResult)}</div>
+        <div>
+            <h4 style="font-size:0.9rem; color:#475569; margin-bottom:4px;">Resultado esperado:</h4>
+            <div style="background:#f0fdf4; padding:10px; border-radius:6px; border:1px solid #bbf7d0; font-size:0.85rem;">${escapeHtml(tc.expectedResult)}</div>
         </div>
     `;
 
@@ -386,37 +310,29 @@ function viewCaseDetail(caseId) {
     };
 
     openModal("modalDetail");
-}
+};
 
-// Eliminar caso
-function deleteCase(caseId) {
+window.deleteCase = function(caseId) {
     const tc = testCases.find(c => c.id === caseId);
     if (!tc) return;
 
-    if (confirm(`¿Está seguro de que desea eliminar el caso de prueba ${tc.code}: "${tc.name}"?`)) {
+    if (confirm(`¿Desea eliminar el caso ${tc.code}: "${tc.name}"?`)) {
         testCases = testCases.filter(c => c.id !== caseId);
         saveToStorage();
         renderAll();
     }
-}
+};
 
-// Acción para pasar al módulo de ejecución de pruebas
-function navigateToExecution(caseId) {
-    alert(`Redirigiendo al módulo de Ejecución de Pruebas para el caso ${caseId}.\n\n(Nota: El módulo de Ejecución se implementará por separado en la siguiente fase).`);
-}
-
-// Controladores de Modal
-function openModal(modalId) {
+window.openModal = function(modalId) {
     const m = document.getElementById(modalId);
-    if (m) m.classList.add("active");
-}
+    if (m) m.style.display = "flex";
+};
 
-function closeModal(modalId) {
+window.closeModal = function(modalId) {
     const m = document.getElementById(modalId);
-    if (m) m.classList.remove("active");
-}
+    if (m) m.style.display = "none";
+};
 
-// Auxiliar para evitar inyección HTML
 function escapeHtml(text) {
     if (!text) return "";
     return text
