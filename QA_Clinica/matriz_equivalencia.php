@@ -1,8 +1,113 @@
 <?php
 $titulo_pestana    = "Matriz de Clases de Equivalencia";
 $titulo_pagina     = "Matriz de Clases de Equivalencia";
-$subtitulo_pagina  = "Técnicas de testing · Análisis de clases válidas e inválidas";
+$subtitulo_pagina  = "Técnicas de testing · Análisis de clases válidas e inválidas (Conectado a BD)";
 include 'includes/header.php';
+
+// Conexión a la Base de Datos (Ajusta los datos si es necesario)
+$host = 'localhost';
+$dbname = 'clinica_db'; // Cambia por el nombre de tu base de datos en phpMyAdmin
+$username = 'root';
+$password = '';
+
+try {
+    $pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8mb4", $username, $password);
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+} catch (PDOException $e) {
+    die("<div style='padding:20px; color:red;'>Error de conexión a la base de datos: " . $e->getMessage() . "</div>");
+}
+
+// Procesar el formulario cuando se envía por POST (Guardar o Editar)
+$mensaje_alerta = "";
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion'])) {
+    if ($_POST['accion'] === 'guardar') {
+        try {
+            $pdo->beginTransaction();
+
+            $editId = $_POST['editId'] ?? '';
+            $code = $_POST['code'];
+            $module = $_POST['module'];
+            $name = $_POST['name'];
+            $fieldName = $_POST['fieldName'];
+            $rule = $_POST['rule'];
+            $observations = $_POST['observations'] ?? '';
+
+            if (!empty($editId)) {
+                // Actualizar cabecera
+                $stmt = $pdo->prepare("UPDATE matriz_equivalencia SET modulo = ?, nombre_analisis = ?, campo_validar = ?, regla_validacion = ?, observaciones = ? WHERE id = ?");
+                $stmt->execute([$module, $name, $fieldName, $rule, $observations, $editId]);
+                
+                // Borrar clases anteriores para reinsertarlas
+                $stmtDel = $pdo->prepare("DELETE FROM clases_equivalencia WHERE matriz_id = ?");
+                $stmtDel->execute([$editId]);
+                $matrizId = $editId;
+            } else {
+                // Insertar nueva cabecera
+                $stmt = $pdo->prepare("INSERT INTO matriz_equivalencia (codigo, modulo, nombre_analisis, campo_validar, regla_validacion, observaciones) VALUES (?, ?, ?, ?, ?, ?)");
+                $stmt->execute([$code, $module, $name, $fieldName, $rule, $observations]);
+                $matrizId = $pdo->lastInsertId();
+            }
+
+            // Insertar Clases de Equivalencia asociadas
+            if (isset($_POST['classes']) && is_array($_POST['classes'])) {
+                $stmtClass = $pdo->prepare("INSERT INTO clases_equivalencia (matriz_id, nombre_clase, tipo_clase, dato_ejemplo, resultado_esperado) VALUES (?, ?, ?, ?, ?)");
+                foreach ($_POST['classes'] as $c) {
+                    if (!empty($c['name']) && !empty($c['data']) && !empty($c['expected'])) {
+                        $stmtClass->execute([$matrizId, $c['name'], $c['type'], $c['data'], $c['expected']]);
+                    }
+                }
+            }
+
+            $pdo->commit();
+            echo "<script>window.location.href='matriz_equivalencia.php';</script>";
+            exit;
+        } catch (Exception $e) {
+            $pdo->rollBack();
+            $mensaje_alerta = "Error al guardar en la base de datos: " . $e->getMessage();
+        }
+    } elseif ($_POST['accion'] === 'eliminar') {
+        $idEliminar = $_POST['id'] ?? '';
+        if (!empty($idEliminar)) {
+            $stmt = $pdo->prepare("DELETE FROM matriz_equivalencia WHERE id = ?");
+            $stmt->execute([$idEliminar]);
+            echo "<script>window.location.href='matriz_equivalencia.php';</script>";
+            exit;
+        }
+    }
+}
+
+// Consultar todos los análisis registrados en la Base de Datos
+$analysesFromDB = [];
+try {
+    $stmt = $pdo->query("SELECT * FROM matriz_equivalencia ORDER BY id DESC");
+    $matices = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    foreach ($matices as $m) {
+        $stmtC = $pdo->prepare("SELECT * FROM clases_equivalencia WHERE matriz_id = ?");
+        $stmtC->execute([$m['id']]);
+        $clases = $stmtC->fetchAll(PDO::FETCH_ASSOC);
+
+        $analysesFromDB[] = [
+            'id' => $m['id'],
+            'code' => $m['codigo'],
+            'module' => $m['modulo'],
+            'name' => $m['nombre_analisis'],
+            'fieldName' => $m['campo_validar'],
+            'rule' => $m['regla_validacion'],
+            'observations' => $m['observaciones'],
+            'classes' => array_map(function($c) {
+                return [
+                    'name' => $c['nombre_clase'],
+                    'type' => $c['tipo_clase'],
+                    'data' => $c['dato_ejemplo'],
+                    'expected' => $c['resultado_esperado']
+                ];
+            }, $clases)
+        ];
+    }
+} catch (Exception $e) {
+    $analysesFromDB = [];
+}
 ?>
 
 <!-- Estilos específicos para la Matriz de Equivalencia -->
@@ -334,6 +439,12 @@ tbody tr:hover {
 
 <div class="main-content-inner">
 
+    <?php if (!empty($mensaje_alerta)): ?>
+        <div style="background: #ffe5e5; color: #b52e35; padding: 15px; border-radius: 6px; margin-bottom: 20px;">
+            <?= htmlspecialchars($mensaje_alerta) ?>
+        </div>
+    <?php endif; ?>
+
     <header class="page-header">
         <div>
             <h1>Matriz de Clases de Equivalencia</h1>
@@ -431,20 +542,22 @@ tbody tr:hover {
         </div>
 
         <div class="modal-body">
-            <form id="analysisForm">
-                <input type="hidden" id="editId">
+            <!-- Formulario enviado mediante POST a PHP -->
+            <form id="analysisForm" method="POST" action="matriz_equivalencia.php">
+                <input type="hidden" name="accion" value="guardar">
+                <input type="hidden" id="editId" name="editId">
 
                 <div class="form-grid">
                     <h3 class="section-title">Información general</h3>
 
                     <div class="field">
                         <label for="code">Código</label>
-                        <input id="code" readonly>
+                        <input id="code" name="code" readonly>
                     </div>
 
                     <div class="field">
                         <label for="module">Módulo del sistema *</label>
-                        <select id="module" required>
+                        <select id="module" name="module" required>
                             <option value="">Seleccionar módulo</option>
                             <option>Gestión de pacientes</option>
                             <option>Búsqueda de pacientes</option>
@@ -457,17 +570,17 @@ tbody tr:hover {
 
                     <div class="field full">
                         <label for="name">Nombre del análisis *</label>
-                        <input id="name" required maxlength="150" placeholder="Ej. Validación de búsqueda de pacientes">
+                        <input id="name" name="name" required maxlength="150" placeholder="Ej. Validación de búsqueda de pacientes">
                     </div>
 
                     <div class="field full">
                         <label for="fieldName">Campo o dato que se va a validar *</label>
-                        <input id="fieldName" required maxlength="120" placeholder="Ej. Nombre del paciente">
+                        <input id="fieldName" name="fieldName" required maxlength="120" placeholder="Ej. Nombre del paciente">
                     </div>
 
                     <div class="field full">
                         <label for="rule">Regla de validación *</label>
-                        <textarea id="rule" required placeholder="Describe qué entradas acepta el sistema y cuáles rechaza."></textarea>
+                        <textarea id="rule" name="rule" required placeholder="Describe qué entradas acepta el sistema y cuáles rechaza."></textarea>
                     </div>
 
                     <h3 class="section-title">Clases de equivalencia</h3>
@@ -482,7 +595,7 @@ tbody tr:hover {
 
                     <div class="field full">
                         <label for="observations">Observaciones</label>
-                        <textarea id="observations" placeholder="Notas adicionales del análisis"></textarea>
+                        <textarea id="observations" name="observations" placeholder="Notas adicionales del análisis"></textarea>
                     </div>
                 </div>
 
@@ -495,24 +608,16 @@ tbody tr:hover {
     </div>
 </div>
 
+<!-- Formulario invisible para eliminar registros -->
+<form id="deleteForm" method="POST" action="matriz_equivalencia.php" style="display:none;">
+    <input type="hidden" name="accion" value="eliminar">
+    <input type="hidden" name="id" id="deleteId">
+</form>
+
 <script>
-const STORAGE_KEY = 'qa_clinica_matriz_equivalencia_v1';
-
-let analyses = loadAnalyses();
+// Cargamos los datos directamente desde PHP (Base de Datos)
+const analyses = <?= json_encode($analysesFromDB); ?>;
 let classCounter = 0;
-
-function loadAnalyses() {
-    try {
-        const data = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-        return Array.isArray(data) ? data : [];
-    } catch (error) {
-        return [];
-    }
-}
-
-function persist() {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(analyses));
-}
 
 function escapeHTML(value) {
     return String(value ?? '').replace(/[&<>"']/g, char => ({
@@ -539,7 +644,7 @@ function openModal(id = null) {
     classCounter = 0;
 
     if (id !== null) {
-        const item = analyses.find(a => a.id === id);
+        const item = analyses.find(a => String(a.id) === String(id));
         if (!item) return;
 
         document.getElementById('modalTitle').textContent = 'Editar análisis de equivalencia';
@@ -585,22 +690,22 @@ function addClass(data = {}) {
         <div class="class-grid">
             <div class="field">
                 <label>Nombre de la clase *</label>
-                <input class="class-name" required maxlength="120" value="${escapeHTML(data.name || '')}" placeholder="Ej. Paciente existente">
+                <input class="class-name" name="classes[${id}][name]" required maxlength="120" value="${escapeHTML(data.name || '')}" placeholder="Ej. Paciente existente">
             </div>
             <div class="field">
                 <label>Tipo de clase *</label>
-                <select class="class-type" required>
+                <select class="class-type" name="classes[${id}][type]" required>
                     <option value="Válida" ${data.type === 'Válida' ? 'selected' : ''}>Válida</option>
                     <option value="Inválida" ${data.type === 'Inválida' ? 'selected' : ''}>Inválida</option>
                 </select>
             </div>
             <div class="field">
                 <label>Dato de ejemplo *</label>
-                <input class="class-data" required maxlength="250" value="${escapeHTML(data.data || '')}" placeholder="Ej. María González">
+                <input class="class-data" name="classes[${id}][data]" required maxlength="250" value="${escapeHTML(data.data || '')}" placeholder="Ej. María González">
             </div>
             <div class="field">
                 <label>Resultado esperado *</label>
-                <input class="class-expected" required maxlength="250" value="${escapeHTML(data.expected || '')}" placeholder="Ej. Mostrar el paciente">
+                <input class="class-expected" name="classes[${id}][expected]" required maxlength="250" value="${escapeHTML(data.expected || '')}" placeholder="Ej. Mostrar el paciente">
             </div>
         </div>
     `;
@@ -611,59 +716,6 @@ function removeClass(id) {
     const element = document.querySelector(`.class-box[data-class-id="${id}"]`);
     if (element) element.remove();
 }
-
-function collectClasses() {
-    return [...document.querySelectorAll('#classesContainer .class-box')].map(box => ({
-        name: box.querySelector('.class-name').value.trim(),
-        type: box.querySelector('.class-type').value,
-        data: box.querySelector('.class-data').value.trim(),
-        expected: box.querySelector('.class-expected').value.trim()
-    }));
-}
-
-document.getElementById('analysisForm').addEventListener('submit', event => {
-    event.preventDefault();
-    const classes = collectClasses();
-
-    if (classes.length === 0) {
-        alert('Agrega al menos una clase de equivalencia.');
-        return;
-    }
-
-    if (classes.some(c => !c.name || !c.data || !c.expected)) {
-        alert('Completa todos los campos de las clases.');
-        return;
-    }
-
-    const editId = document.getElementById('editId').value;
-    const item = {
-        id: editId || (window.crypto && crypto.randomUUID ? crypto.randomUUID() : String(Date.now())),
-        code: document.getElementById('code').value,
-        module: document.getElementById('module').value,
-        name: document.getElementById('name').value.trim(),
-        fieldName: document.getElementById('fieldName').value.trim(),
-        rule: document.getElementById('rule').value.trim(),
-        observations: document.getElementById('observations').value.trim(),
-        classes,
-        updatedAt: new Date().toISOString()
-    };
-
-    if (editId) {
-        analyses = analyses.map(a => a.id === editId ? item : a);
-    } else {
-        analyses.push(item);
-    }
-
-    try {
-        persist();
-    } catch (error) {
-        alert('No se pudieron guardar los datos en este navegador.');
-        return;
-    }
-
-    closeModal();
-    renderTable();
-});
 
 function renderTable() {
     const search = document.getElementById('search').value.trim().toLowerCase();
@@ -716,7 +768,7 @@ function updateStats() {
 }
 
 function viewAnalysis(id) {
-    const item = analyses.find(a => a.id === id);
+    const item = analyses.find(a => String(a.id) === String(id));
     if (!item) return;
 
     const details = [
@@ -735,18 +787,13 @@ function viewAnalysis(id) {
 }
 
 function deleteAnalysis(id) {
-    const item = analyses.find(a => a.id === id);
+    const item = analyses.find(a => String(a.id) === String(id));
     if (!item) return;
 
     if (!confirm(`¿Eliminar el análisis ${item.code}? Esta acción no se puede deshacer.`)) return;
 
-    analyses = analyses.filter(a => a.id !== id);
-    try {
-        persist();
-        renderTable();
-    } catch (error) {
-        alert('No se pudo actualizar el almacenamiento.');
-    }
+    document.getElementById('deleteId').value = id;
+    document.getElementById('deleteForm').submit();
 }
 
 function clearFilters() {
