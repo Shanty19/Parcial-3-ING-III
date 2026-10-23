@@ -42,6 +42,7 @@ $pdf_export_data = [
             'items' => [
                 ['label' => 'Código', 'value' => $tc['codigo'] ?? ''],
                 ['label' => 'Nombre del caso', 'value' => $tc['nombre_caso'] ?? ''],
+                ['label' => 'Técnica utilizada', 'value' => $tc['tecnica_utilizada'] ?? 'No especificada'],
                 ['label' => 'Prioridad', 'value' => $tc['prioridad'] ?? ''],
                 ['label' => 'Estado', 'value' => $tc['estado'] ?? ''],
                 ['label' => 'Objetivo', 'value' => $tc['objetivo'] ?? ''],
@@ -85,8 +86,8 @@ include 'includes/header.php';
         </span>
     </div>
     <div style="background: white; padding: 20px; border-radius: 8px; border-top: 4px solid #8b5cf6; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-        <span style="color: #64748b; font-size: 0.85rem; display: block; margin-bottom: 6px;">Proyecto</span>
-        <strong style="font-size: 1.2rem; color: #1e293b; display: block;">Clínica Salud+</strong>
+        <span style="color: #64748b; font-size: 0.85rem; display: block; margin-bottom: 6px;">Técnica utilizada</span>
+        <strong style="font-size: 1.2rem; color: #1e293b; display: block;"><?php echo htmlspecialchars($tc['tecnica_utilizada'] ?? 'No especificada'); ?></strong>
     </div>
 </div>
 

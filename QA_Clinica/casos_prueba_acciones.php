@@ -91,7 +91,14 @@ if ($action == 'save') {
     $datos_prueba = $_POST['datos_prueba'] ?? '';
     $pasos = $_POST['pasos'] ?? '';
     $resultado = $_POST['resultado_esperado'] ?? '';
+    $tecnica = $_POST['tecnica_utilizada'] ?? '';
     $fecha = date('Y-m-d');
+
+    $tecnicas_validas = ['Caja negra', 'Caja blanca'];
+    if (!in_array($tecnica, $tecnicas_validas, true)) {
+        header('Location: casos_prueba.php?error=Técnica inválida');
+        exit;
+    }
 
     if (empty($codigo) || empty($nombre) || empty($modulo) || empty($objetivo) || empty($pasos) || empty($resultado)) {
         header('Location: casos_prueba.php?error=Campos obligatorios vacios');
@@ -106,13 +113,13 @@ if ($action == 'save') {
         $evidenciaJson = empty($evidencias) ? '' : json_encode($evidencias, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP);
 
         if (!empty($id)) {
-            $sql = "UPDATE qa_casos_prueba SET nombre_caso=?, modulo=?, prioridad=?, estado=?, objetivo=?, precondiciones=?, datos_prueba=?, pasos=?, resultado_esperado=?, evidencia=? WHERE id=?";
+            $sql = "UPDATE qa_casos_prueba SET nombre_caso=?, modulo=?, prioridad=?, estado=?, objetivo=?, precondiciones=?, datos_prueba=?, pasos=?, resultado_esperado=?, tecnica_utilizada=?, evidencia=? WHERE id=?";
             $stmt = $pdo->prepare($sql);
-            $stmt->execute([$nombre, $modulo, $prioridad, $estado, $objetivo, $precondiciones, $datos_prueba, $pasos, $resultado, $evidenciaJson, $id]);
+            $stmt->execute([$nombre, $modulo, $prioridad, $estado, $objetivo, $precondiciones, $datos_prueba, $pasos, $resultado, $tecnica, $evidenciaJson, $id]);
         } else {
-            $sql = "INSERT INTO qa_casos_prueba (codigo, nombre_caso, modulo, prioridad, estado, objetivo, precondiciones, datos_prueba, pasos, resultado_esperado, fecha_creacion, evidencia) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            $sql = "INSERT INTO qa_casos_prueba (codigo, nombre_caso, modulo, prioridad, estado, objetivo, precondiciones, datos_prueba, pasos, resultado_esperado, tecnica_utilizada, fecha_creacion, evidencia) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
             $stmt = $pdo->prepare($sql);
-            $stmt->execute([$codigo, $nombre, $modulo, $prioridad, $estado, $objetivo, $precondiciones, $datos_prueba, $pasos, $resultado, $fecha, $evidenciaJson]);
+            $stmt->execute([$codigo, $nombre, $modulo, $prioridad, $estado, $objetivo, $precondiciones, $datos_prueba, $pasos, $resultado, $tecnica, $fecha, $evidenciaJson]);
         }
     } catch (Throwable $e) {
         header('Location: casos_prueba.php?error=' . rawurlencode($e->getMessage()));
