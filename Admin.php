@@ -18,6 +18,16 @@ require_once __DIR__ . '/config.php';   // define BUS_URL y BUS_URI
 $BUS_URL = BUS_URL;
 $BUS_URI = BUS_URI;
 
+try {
+    $stmtLogs = $pdo->query(
+        'SELECT usuario_id, nombre_usuario, rol, fecha_hora FROM login_logs ORDER BY fecha_hora DESC LIMIT 50'
+    );
+    $loginLogs = $stmtLogs->fetchAll(PDO::FETCH_ASSOC);
+} catch (Throwable $e) {
+    $loginLogs = [];
+    error_log('No se pudo consultar login_logs: ' . $e->getMessage());
+}
+
 $mensaje = '';
 $tipoMensaje = '';
 
@@ -92,6 +102,39 @@ include 'includes/header.php';
             🗑️ Borrar todas las búsquedas
         </button>
     </form>
+</div>
+
+<h2 class="titulo-pagina" style="font-size: 1.3rem; margin-top: 24px;">Auditoría de accesos</h2>
+<p class="subtitulo-pagina">Últimos inicios de sesión registrados en el sistema.</p>
+
+<div class="tabla-wrap" style="margin-top: 12px;">
+    <table class="tabla-admin">
+        <thead>
+            <tr>
+                <th>Usuario</th>
+                <th>Rol</th>
+                <th>Fecha</th>
+                <th>Hora</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php if (empty($loginLogs)): ?>
+                <tr>
+                    <td colspan="4">No hay registros de inicio de sesión.</td>
+                </tr>
+            <?php else: ?>
+                <?php foreach ($loginLogs as $log): ?>
+                    <?php $fechaHora = new DateTime($log['fecha_hora']); ?>
+                    <tr>
+                        <td><?php echo htmlspecialchars($log['nombre_usuario']); ?></td>
+                        <td><?php echo htmlspecialchars($log['rol']); ?></td>
+                        <td><?php echo htmlspecialchars($fechaHora->format('Y-m-d')); ?></td>
+                        <td><?php echo htmlspecialchars($fechaHora->format('H:i:s')); ?></td>
+                    </tr>
+                <?php endforeach; ?>
+            <?php endif; ?>
+        </tbody>
+    </table>
 </div>
 
 <div id="sin-datos-inicial" class="sin-datos" <?php echo empty($busquedas) ? '' : 'style="display:none;"'; ?>>

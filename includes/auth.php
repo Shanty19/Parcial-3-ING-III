@@ -36,6 +36,9 @@ function usuario_actual()
     // Cierre por inactividad
     $ahora = time();
     if (isset($_SESSION['ultimo_acceso']) && ($ahora - $_SESSION['ultimo_acceso']) > SESION_INACTIVIDAD_MIN * 60) {
+        if (!empty($_SESSION['usuario'])) {
+            registrar_salida_login();
+        }
         // Se limpia la sesión pero se conserva la sesión PHP viva (con ID nuevo),
         // para poder avisarle al usuario por qué lo mandamos al login.
         $_SESSION = ['sesion_expirada' => true];
@@ -60,8 +63,93 @@ function iniciar_sesion_usuario(array $u)
     $_SESSION['ultimo_acceso'] = time();
 }
 
+/** Registra un login exitoso sin guardar secretos ni repetir el mismo evento en la misma sesión. */
+function registrar_login_exitoso(array $u)
+{
+    if (empty($u['id']) && empty($u['username']) && empty($u['rol'])) {
+        return false;
+    }
+
+    $usuarioId = (int) ($u['id'] ?? 0);
+    $nombreUsuario = trim((string) ($u['username'] ?? ''));
+    $rol = trim((string) ($u['rol'] ?? ''));
+
+    if ($usuarioId <= 0 || $nombreUsuario === '' || $rol === '') {
+        return false;
+    }
+
+    $clave = $usuarioId . '|' . $nombreUsuario . '|' . $rol;
+    if (!empty($_SESSION['login_log_registrado']) && $_SESSION['login_log_registrado'] === $clave) {
+        return true;
+    }
+
+    try {
+        require_once __DIR__ . '/../config.php';
+        $pdo = $GLOBALS['pdo'] ?? null;
+        if (!$pdo) {
+            return false;
+        }
+
+        $stmt = $pdo->prepare(
+            'INSERT INTO login_logs (usuario_id, nombre_usuario, rol, fecha_hora) VALUES (:usuario_id, :nombre_usuario, :rol, NOW())'
+        );
+        $stmt->execute([
+            ':usuario_id' => $usuarioId,
+            ':nombre_usuario' => $nombreUsuario,
+            ':rol' => $rol,
+        ]);
+
+        $_SESSION['login_log_registrado'] = $clave;
+        $_SESSION['login_log_id'] = (int) $pdo->lastInsertId();
+        return true;
+    } catch (Throwable $e) {
+        error_log('Error al registrar login_logs: ' . $e->getMessage());
+        return false;
+    }
+}
+
+/** Actualiza la salida del mismo registro de inicio de sesión asociado a esta sesión. */
+function registrar_salida_login()
+{
+    if (empty($_SESSION['usuario']) || empty($_SESSION['login_log_id'])) {
+        return false;
+    }
+
+    $usuarioId = (int) ($_SESSION['usuario']['id'] ?? 0);
+    $loginLogId = (int) $_SESSION['login_log_id'];
+    if ($usuarioId <= 0 || $loginLogId <= 0) {
+        return false;
+    }
+
+    try {
+        require_once __DIR__ . '/../config.php';
+        $pdo = $GLOBALS['pdo'] ?? null;
+        if (!$pdo) {
+            return false;
+        }
+
+        $stmt = $pdo->prepare(
+            'UPDATE login_logs SET fecha_hora_salida = NOW() WHERE id = :id AND usuario_id = :usuario_id AND fecha_hora_salida IS NULL LIMIT 1'
+        );
+        $stmt->execute([
+            ':id' => $loginLogId,
+            ':usuario_id' => $usuarioId,
+        ]);
+
+        unset($_SESSION['login_log_id'], $_SESSION['login_log_registrado']);
+        return $stmt->rowCount() > 0;
+    } catch (Throwable $e) {
+        error_log('Error al registrar salida en login_logs: ' . $e->getMessage());
+        return false;
+    }
+}
+
 function cerrar_sesion()
 {
+    if (!empty($_SESSION['usuario'])) {
+        registrar_salida_login();
+    }
+
     $_SESSION = [];
     if (ini_get('session.use_cookies')) {
         $p = session_get_cookie_params();

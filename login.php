@@ -40,6 +40,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // Por defecto entra a Pacientes; si venía de otra página protegida, vuelve a esa.
                 $destino = $_SESSION['volver_a'] ?? 'pacientes.php';   // iniciar_sesion_usuario() lo limpia
                 iniciar_sesion_usuario($r);
+                registrar_login_exitoso($_SESSION['usuario']);
 
                 // Redirección por rol: el Tester (Testing) entra a su dashboard de QA.
                 // El Administrador conserva exactamente el destino de siempre (volver_a o pacientes.php).
