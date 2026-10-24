@@ -268,6 +268,11 @@ try {
                 </div>
 
                 <div style="margin-bottom: 12px;">
+                    <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 4px; color: #475569;">Fecha</label>
+                    <input type="date" name="fecha_creacion" id="caseDate" value="<?php echo date('Y-m-d'); ?>" required style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box;">
+                </div>
+
+                <div style="margin-bottom: 12px;">
                     <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 4px; color: #475569;">Técnica utilizada *</label>
                     <select name="tecnica_utilizada" id="caseTechnique" required style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; background: white; box-sizing: border-box;">
                         <option value="">Seleccione una técnica</option>
@@ -326,6 +331,7 @@ function openNewModal() {
     document.getElementById('caseId').value = '';
     document.getElementById('caseCode').value = '<?php echo $proximo_codigo; ?>';
     document.getElementById('caseName').value = '';
+    document.getElementById('caseDate').value = '<?php echo date('Y-m-d'); ?>';
     document.getElementById('caseTechnique').value = '';
     document.getElementById('caseObjective').value = '';
     document.getElementById('casePreconditions').value = '';
@@ -347,6 +353,7 @@ function openEditModal(tc) {
     document.getElementById('caseModule').value = tc.modulo;
     document.getElementById('casePriority').value = tc.prioridad;
     document.getElementById('caseStatus').value = tc.estado;
+    document.getElementById('caseDate').value = tc.fecha_creacion ? tc.fecha_creacion.split(' ')[0] : '<?php echo date('Y-m-d'); ?>';
     document.getElementById('caseTechnique').value = tc.tecnica_utilizada || '';
     document.getElementById('caseObjective').value = tc.objetivo;
     document.getElementById('casePreconditions').value = tc.preconditions || '';

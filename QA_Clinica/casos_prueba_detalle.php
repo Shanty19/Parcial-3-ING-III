@@ -42,6 +42,7 @@ $pdf_export_data = [
             'items' => [
                 ['label' => 'Código', 'value' => $tc['codigo'] ?? ''],
                 ['label' => 'Nombre del caso', 'value' => $tc['nombre_caso'] ?? ''],
+                ['label' => 'Fecha', 'value' => $tc['fecha_creacion'] ?? 'No especificada'],
                 ['label' => 'Técnica utilizada', 'value' => $tc['tecnica_utilizada'] ?? 'No especificada'],
                 ['label' => 'Prioridad', 'value' => $tc['prioridad'] ?? ''],
                 ['label' => 'Estado', 'value' => $tc['estado'] ?? ''],
