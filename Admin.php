@@ -20,11 +20,13 @@ $BUS_URI = BUS_URI;
 
 try {
     $stmtLogs = $pdo->query(
-        'SELECT usuario_id, nombre_usuario, rol, fecha_hora FROM login_logs ORDER BY fecha_hora DESC LIMIT 50'
+        'SELECT usuario_id, nombre_usuario, rol, fecha_hora, fecha_hora_salida FROM login_logs ORDER BY fecha_hora DESC, id DESC LIMIT 50'
     );
     $loginLogs = $stmtLogs->fetchAll(PDO::FETCH_ASSOC);
-} catch (Throwable $e) {
+    $errorLoginLogs = '';
+} catch (PDOException $e) {
     $loginLogs = [];
+    $errorLoginLogs = 'No se pudo consultar el historial de sesiones.';
     error_log('No se pudo consultar login_logs: ' . $e->getMessage());
 }
 
@@ -104,23 +106,26 @@ include 'includes/header.php';
     </form>
 </div>
 
-<h2 class="titulo-pagina" style="font-size: 1.3rem; margin-top: 24px;">Auditoría de accesos</h2>
-<p class="subtitulo-pagina">Últimos inicios de sesión registrados en el sistema.</p>
+<h2 class="titulo-pagina" style="font-size: 1.3rem; margin-top: 24px;">Historial de sesiones</h2>
+<p class="subtitulo-pagina">Últimos inicios y cierres de sesión registrados en el sistema.</p>
 
 <div class="tabla-wrap" style="margin-top: 12px;">
+    <?php if ($errorLoginLogs): ?>
+        <div class="alerta alerta-error"><?php echo htmlspecialchars($errorLoginLogs); ?></div>
+    <?php else: ?>
     <table class="tabla-admin">
         <thead>
             <tr>
                 <th>Usuario</th>
                 <th>Rol</th>
-                <th>Fecha</th>
-                <th>Hora</th>
+                <th>Inicio de sesión</th>
+                <th>Cierre de sesión</th>
             </tr>
         </thead>
         <tbody>
             <?php if (empty($loginLogs)): ?>
                 <tr>
-                    <td colspan="4">No hay registros de inicio de sesión.</td>
+                    <td colspan="4">No hay registros de sesiones.</td>
                 </tr>
             <?php else: ?>
                 <?php foreach ($loginLogs as $log): ?>
@@ -128,13 +133,20 @@ include 'includes/header.php';
                     <tr>
                         <td><?php echo htmlspecialchars($log['nombre_usuario']); ?></td>
                         <td><?php echo htmlspecialchars($log['rol']); ?></td>
-                        <td><?php echo htmlspecialchars($fechaHora->format('Y-m-d')); ?></td>
-                        <td><?php echo htmlspecialchars($fechaHora->format('H:i:s')); ?></td>
+                        <td><?php echo htmlspecialchars($fechaHora->format('Y-m-d H:i:s')); ?></td>
+                        <td>
+                            <?php
+                            echo $log['fecha_hora_salida'] === null
+                                ? 'En curso'
+                                : htmlspecialchars((new DateTime($log['fecha_hora_salida']))->format('Y-m-d H:i:s'));
+                            ?>
+                        </td>
                     </tr>
                 <?php endforeach; ?>
             <?php endif; ?>
         </tbody>
     </table>
+    <?php endif; ?>
 </div>
 
 <div id="sin-datos-inicial" class="sin-datos" <?php echo empty($busquedas) ? '' : 'style="display:none;"'; ?>>

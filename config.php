@@ -30,7 +30,7 @@ try {
 // así que el app y el bus deben correr en puertos distintos.
 // ------------------------------------------------------------------
 if (!defined('BUS_URL')) {
-    define('BUS_URL', 'http://localhost/parcial3/Parcial-3-ING-III/Bus.php');
+    define('BUS_URL', 'http://localhost/Clinicaprueba1/Parcial-3-ING-III/Bus.php');
 }
 if (!defined('BUS_URI')) {
     define('BUS_URI', 'urn:busclinica');

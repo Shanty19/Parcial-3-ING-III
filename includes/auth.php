@@ -91,7 +91,7 @@ function registrar_login_exitoso(array $u)
         }
 
         $stmt = $pdo->prepare(
-            'INSERT INTO login_logs (usuario_id, nombre_usuario, rol, fecha_hora) VALUES (:usuario_id, :nombre_usuario, :rol, NOW())'
+            'INSERT INTO login_logs (usuario_id, nombre_usuario, rol, fecha_hora, fecha_hora_salida) VALUES (:usuario_id, :nombre_usuario, :rol, NOW(), NULL)'
         );
         $stmt->execute([
             ':usuario_id' => $usuarioId,
@@ -122,8 +122,8 @@ function registrar_salida_login()
     }
 
     try {
+        global $pdo;
         require_once __DIR__ . '/../config.php';
-        $pdo = $GLOBALS['pdo'] ?? null;
         if (!$pdo) {
             return false;
         }
