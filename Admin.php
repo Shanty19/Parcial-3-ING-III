@@ -18,14 +18,52 @@ require_once __DIR__ . '/config.php';   // define BUS_URL y BUS_URI
 $BUS_URL = BUS_URL;
 $BUS_URI = BUS_URI;
 
+$registrosPorPagina = 50;
+$paginaSolicitada = $_GET['login_page'] ?? 1;
+if (!is_scalar($paginaSolicitada)) {
+    $paginaSolicitada = 1;
+}
+$paginaSolicitada = filter_var($paginaSolicitada, FILTER_VALIDATE_INT);
+$paginaLogin = max(1, $paginaSolicitada === false ? 1 : $paginaSolicitada);
+$totalLoginLogs = 0;
+$totalPaginasLogin = 1;
+$offsetLogin = 0;
+
 try {
-    $stmtLogs = $pdo->query(
-        'SELECT usuario_id, nombre_usuario, rol, fecha_hora, fecha_hora_salida FROM login_logs ORDER BY fecha_hora DESC, id DESC LIMIT 50'
+    $eventosLoginSql = '
+        SELECT id, nombre_usuario, rol, 1 AS estado, fecha_hora AS fecha_evento
+        FROM login_logs
+        WHERE estado IS NULL
+        UNION ALL
+        SELECT id, nombre_usuario, rol, 0 AS estado, fecha_hora_salida AS fecha_evento
+        FROM login_logs
+        WHERE estado IS NULL AND fecha_hora_salida IS NOT NULL
+        UNION ALL
+        SELECT id, nombre_usuario, rol, estado, fecha_hora AS fecha_evento
+        FROM login_logs
+        WHERE estado IN (0, 1)
+    ';
+    $totalLoginLogs = (int) $pdo->query(
+        'SELECT COUNT(*) FROM (' . $eventosLoginSql . ') AS eventos_login'
+    )->fetchColumn();
+    $totalPaginasLogin = max(1, (int) ceil($totalLoginLogs / $registrosPorPagina));
+    $paginaLogin = min($paginaLogin, $totalPaginasLogin);
+    $offsetLogin = ($paginaLogin - 1) * $registrosPorPagina;
+
+    $stmtLogs = $pdo->prepare(
+        'SELECT id, nombre_usuario, rol, estado, fecha_evento
+         FROM (' . $eventosLoginSql . ') AS eventos_login
+         ORDER BY fecha_evento DESC, id DESC, estado DESC
+         LIMIT :limite OFFSET :desplazamiento'
     );
+    $stmtLogs->bindValue(':limite', $registrosPorPagina, PDO::PARAM_INT);
+    $stmtLogs->bindValue(':desplazamiento', $offsetLogin, PDO::PARAM_INT);
+    $stmtLogs->execute();
     $loginLogs = $stmtLogs->fetchAll(PDO::FETCH_ASSOC);
     $errorLoginLogs = '';
 } catch (PDOException $e) {
     $loginLogs = [];
+    $totalLoginLogs = 0;
     $errorLoginLogs = 'No se pudo consultar el historial de sesiones.';
     error_log('No se pudo consultar login_logs: ' . $e->getMessage());
 }
@@ -118,8 +156,8 @@ include 'includes/header.php';
             <tr>
                 <th>Usuario</th>
                 <th>Rol</th>
-                <th>Inicio de sesión</th>
-                <th>Cierre de sesión</th>
+                <th>Evento</th>
+                <th>Fecha y hora</th>
             </tr>
         </thead>
         <tbody>
@@ -129,18 +167,11 @@ include 'includes/header.php';
                 </tr>
             <?php else: ?>
                 <?php foreach ($loginLogs as $log): ?>
-                    <?php $fechaHora = new DateTime($log['fecha_hora']); ?>
                     <tr>
                         <td><?php echo htmlspecialchars($log['nombre_usuario']); ?></td>
                         <td><?php echo htmlspecialchars($log['rol']); ?></td>
-                        <td><?php echo htmlspecialchars($fechaHora->format('Y-m-d H:i:s')); ?></td>
-                        <td>
-                            <?php
-                            echo $log['fecha_hora_salida'] === null
-                                ? 'En curso'
-                                : htmlspecialchars((new DateTime($log['fecha_hora_salida']))->format('Y-m-d H:i:s'));
-                            ?>
-                        </td>
+                        <td><?php echo (int) $log['estado'] === 1 ? 'Inicio de sesión' : 'Cierre de sesión'; ?></td>
+                        <td><?php echo htmlspecialchars((new DateTime($log['fecha_evento']))->format('Y-m-d H:i:s')); ?></td>
                     </tr>
                 <?php endforeach; ?>
             <?php endif; ?>
@@ -148,6 +179,26 @@ include 'includes/header.php';
     </table>
     <?php endif; ?>
 </div>
+
+<?php if (!$errorLoginLogs && $totalLoginLogs > 0): ?>
+    <p class="conteo-registros">
+        Mostrando <?php echo $offsetLogin + 1; ?>–<?php echo $offsetLogin + count($loginLogs); ?>
+        de <?php echo $totalLoginLogs; ?> registro(s) de sesión.
+    </p>
+    <?php if ($totalPaginasLogin > 1): ?>
+        <nav aria-label="Paginación del historial de sesiones" style="display:flex; gap:8px; align-items:center; margin:12px 0 24px;">
+            <?php if ($paginaLogin > 1): ?>
+                <a class="btn btn-secundario" href="Admin.php?login_page=1">Primera</a>
+                <a class="btn btn-secundario" href="Admin.php?login_page=<?php echo $paginaLogin - 1; ?>">Anterior</a>
+            <?php endif; ?>
+            <span>Página <?php echo $paginaLogin; ?> de <?php echo $totalPaginasLogin; ?></span>
+            <?php if ($paginaLogin < $totalPaginasLogin): ?>
+                <a class="btn btn-secundario" href="Admin.php?login_page=<?php echo $paginaLogin + 1; ?>">Siguiente</a>
+                <a class="btn btn-secundario" href="Admin.php?login_page=<?php echo $totalPaginasLogin; ?>">Última</a>
+            <?php endif; ?>
+        </nav>
+    <?php endif; ?>
+<?php endif; ?>
 
 <div id="sin-datos-inicial" class="sin-datos" <?php echo empty($busquedas) ? '' : 'style="display:none;"'; ?>>
     <p>No hay búsquedas registradas.</p>

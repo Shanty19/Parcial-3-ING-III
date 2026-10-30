@@ -55,6 +55,7 @@ function iniciar_sesion_usuario(array $u)
 {
     session_regenerate_id(true); // evita "session fixation"
     unset($_SESSION['sesion_expirada'], $_SESSION['volver_a']);
+    unset($_SESSION['login_log_registrado'], $_SESSION['login_log_salida_registrada']);
     $_SESSION['usuario'] = [
         'id'       => (int) $u['id'],
         'username' => (string) $u['username'],
@@ -63,13 +64,9 @@ function iniciar_sesion_usuario(array $u)
     $_SESSION['ultimo_acceso'] = time();
 }
 
-/** Registra un login exitoso sin guardar secretos ni repetir el mismo evento en la misma sesión. */
+/** Registra un inicio exitoso una sola vez por sesión autenticada. */
 function registrar_login_exitoso(array $u)
 {
-    if (empty($u['id']) && empty($u['username']) && empty($u['rol'])) {
-        return false;
-    }
-
     $usuarioId = (int) ($u['id'] ?? 0);
     $nombreUsuario = trim((string) ($u['username'] ?? ''));
     $rol = trim((string) ($u['rol'] ?? ''));
@@ -84,14 +81,15 @@ function registrar_login_exitoso(array $u)
     }
 
     try {
+        global $pdo;
         require_once __DIR__ . '/../config.php';
-        $pdo = $GLOBALS['pdo'] ?? null;
-        if (!$pdo) {
+        if (!($pdo instanceof PDO)) {
             return false;
         }
 
         $stmt = $pdo->prepare(
-            'INSERT INTO login_logs (usuario_id, nombre_usuario, rol, fecha_hora, fecha_hora_salida) VALUES (:usuario_id, :nombre_usuario, :rol, NOW(), NULL)'
+            'INSERT INTO login_logs (usuario_id, nombre_usuario, rol, estado, fecha_hora, fecha_hora_salida)
+             VALUES (:usuario_id, :nombre_usuario, :rol, 1, NOW(), NULL)'
         );
         $stmt->execute([
             ':usuario_id' => $usuarioId,
@@ -100,7 +98,6 @@ function registrar_login_exitoso(array $u)
         ]);
 
         $_SESSION['login_log_registrado'] = $clave;
-        $_SESSION['login_log_id'] = (int) $pdo->lastInsertId();
         return true;
     } catch (Throwable $e) {
         error_log('Error al registrar login_logs: ' . $e->getMessage());
@@ -108,46 +105,54 @@ function registrar_login_exitoso(array $u)
     }
 }
 
-/** Actualiza la salida del mismo registro de inicio de sesión asociado a esta sesión. */
+/** Registra un evento de cierre una sola vez por sesión autenticada. */
 function registrar_salida_login()
 {
-    if (empty($_SESSION['usuario']) || empty($_SESSION['login_log_id'])) {
+    if (empty($_SESSION['usuario']) || empty($_SESSION['login_log_registrado'])) {
         return false;
     }
+    if (!empty($_SESSION['login_log_salida_registrada'])) {
+        return true;
+    }
 
-    $usuarioId = (int) ($_SESSION['usuario']['id'] ?? 0);
-    $loginLogId = (int) $_SESSION['login_log_id'];
-    if ($usuarioId <= 0 || $loginLogId <= 0) {
+    $u = $_SESSION['usuario'];
+    $usuarioId = (int) ($u['id'] ?? 0);
+    $nombreUsuario = trim((string) ($u['username'] ?? ''));
+    $rol = trim((string) ($u['rol'] ?? ''));
+    if ($usuarioId <= 0 || $nombreUsuario === '' || $rol === '') {
         return false;
     }
 
     try {
         global $pdo;
         require_once __DIR__ . '/../config.php';
-        if (!$pdo) {
+        if (!($pdo instanceof PDO)) {
             return false;
         }
 
         $stmt = $pdo->prepare(
-            'UPDATE login_logs SET fecha_hora_salida = NOW() WHERE id = :id AND usuario_id = :usuario_id AND fecha_hora_salida IS NULL LIMIT 1'
+            'INSERT INTO login_logs (usuario_id, nombre_usuario, rol, estado, fecha_hora, fecha_hora_salida)
+             VALUES (:usuario_id, :nombre_usuario, :rol, 0, NOW(), NULL)'
         );
         $stmt->execute([
-            ':id' => $loginLogId,
             ':usuario_id' => $usuarioId,
+            ':nombre_usuario' => $nombreUsuario,
+            ':rol' => $rol,
         ]);
 
-        unset($_SESSION['login_log_id'], $_SESSION['login_log_registrado']);
-        return $stmt->rowCount() > 0;
+        $_SESSION['login_log_salida_registrada'] = true;
+        return true;
     } catch (Throwable $e) {
-        error_log('Error al registrar salida en login_logs: ' . $e->getMessage());
+        error_log('Error al registrar evento de cierre en login_logs: ' . $e->getMessage());
         return false;
     }
 }
 
 function cerrar_sesion()
 {
+    $salidaRegistrada = true;
     if (!empty($_SESSION['usuario'])) {
-        registrar_salida_login();
+        $salidaRegistrada = registrar_salida_login();
     }
 
     $_SESSION = [];
@@ -156,6 +161,7 @@ function cerrar_sesion()
         setcookie(session_name(), '', time() - 42000, $p['path'], $p['domain'], $p['secure'], $p['httponly']);
     }
     session_destroy();
+    return $salidaRegistrada;
 }
 
 /**

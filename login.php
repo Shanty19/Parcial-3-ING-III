@@ -40,21 +40,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // Por defecto entra a Pacientes; si venía de otra página protegida, vuelve a esa.
                 $destino = $_SESSION['volver_a'] ?? 'pacientes.php';   // iniciar_sesion_usuario() lo limpia
                 iniciar_sesion_usuario($r);
-                registrar_login_exitoso($_SESSION['usuario']);
+                if (!registrar_login_exitoso($_SESSION['usuario'])) {
+                    cerrar_sesion();
+                    $error = 'No se pudo registrar el inicio de sesión. Intenta de nuevo más tarde.';
+                } else {
+                    // El Tester (Testing) entra a su dashboard de QA.
+                    // El Administrador conserva el destino de siempre.
+                    if (in_array($r['rol'], ['personal', 'tester'], true)) {
+                        $destino = 'QA_Clinica/dashboard.php';
+                    }
 
-                // Redirección por rol: el Tester (Testing) entra a su dashboard de QA.
-                // El Administrador conserva exactamente el destino de siempre (volver_a o pacientes.php).
-                if (in_array($r['rol'], ['personal', 'tester'], true)) {
-                    $destino = 'QA_Clinica/dashboard.php';
+                    $destinoValido = $destino === 'QA_Clinica/dashboard.php'
+                        || preg_match('/^[A-Za-z0-9_]+\.php$/', $destino);
+
+                    header('Location: ' . ($destinoValido ? $destino : 'pacientes.php'));
+                    exit;
                 }
-
-                $destinoValido = $destino === 'QA_Clinica/dashboard.php'
-                    || preg_match('/^[A-Za-z0-9_]+\.php$/', $destino);
-
-                header('Location: ' . ($destinoValido ? $destino : 'pacientes.php'));
-                exit;
+            } else {
+                $error = $r['mensaje'] ?? 'Usuario o contraseña incorrectos.';
             }
-            $error = $r['mensaje'] ?? 'Usuario o contraseña incorrectos.';
         } catch (SoapFault $fault) {
             $error = 'No se pudo contactar el servicio de autenticación. Intenta más tarde.';
         }
@@ -67,6 +71,7 @@ $m = $_GET['m'] ?? '';
 if ($m === 'expirada')      $aviso = 'Tu sesión se cerró por inactividad. Inicia sesión de nuevo.';
 elseif ($m === 'requerido') $aviso = 'Inicia sesión para continuar.';
 elseif ($m === 'salio')     $aviso = 'Cerraste sesión correctamente.';
+elseif ($m === 'error_salida') $aviso = 'La sesión se cerró, pero no se pudo guardar la hora de salida en el historial.';
 
 include 'includes/header.php';
 ?>
@@ -79,7 +84,7 @@ include 'includes/header.php';
     <?php if ($error): ?>
       <div class="alerta alerta-error"><?php echo htmlspecialchars($error); ?></div>
     <?php elseif ($aviso): ?>
-      <div class="alerta <?php echo $m === 'salio' ? 'alerta-exito' : 'alerta-info'; ?>">
+      <div class="alerta <?php echo $m === 'salio' ? 'alerta-exito' : ($m === 'error_salida' ? 'alerta-error' : 'alerta-info'); ?>">
         <?php echo htmlspecialchars($aviso); ?>
       </div>
     <?php endif; ?>
