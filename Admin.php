@@ -31,17 +31,10 @@ $offsetLogin = 0;
 
 try {
     $eventosLoginSql = '
-        SELECT id, nombre_usuario, rol, 1 AS estado, fecha_hora AS fecha_evento
+        SELECT id, nombre_usuario, rol,
+               CASE WHEN estado IS NULL THEN 1 ELSE estado END AS estado,
+               fecha_hora AS fecha_evento
         FROM login_logs
-        WHERE estado IS NULL
-        UNION ALL
-        SELECT id, nombre_usuario, rol, 0 AS estado, fecha_hora_salida AS fecha_evento
-        FROM login_logs
-        WHERE estado IS NULL AND fecha_hora_salida IS NOT NULL
-        UNION ALL
-        SELECT id, nombre_usuario, rol, estado, fecha_hora AS fecha_evento
-        FROM login_logs
-        WHERE estado IN (0, 1)
     ';
     $totalLoginLogs = (int) $pdo->query(
         'SELECT COUNT(*) FROM (' . $eventosLoginSql . ') AS eventos_login'

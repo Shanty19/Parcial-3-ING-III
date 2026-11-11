@@ -88,8 +88,8 @@ function registrar_login_exitoso(array $u)
         }
 
         $stmt = $pdo->prepare(
-            'INSERT INTO login_logs (usuario_id, nombre_usuario, rol, estado, fecha_hora, fecha_hora_salida)
-             VALUES (:usuario_id, :nombre_usuario, :rol, 1, NOW(), NULL)'
+            'INSERT INTO login_logs (usuario_id, nombre_usuario, rol, estado, fecha_hora)
+             VALUES (:usuario_id, :nombre_usuario, :rol, 1, NOW())'
         );
         $stmt->execute([
             ':usuario_id' => $usuarioId,
@@ -131,8 +131,8 @@ function registrar_salida_login()
         }
 
         $stmt = $pdo->prepare(
-            'INSERT INTO login_logs (usuario_id, nombre_usuario, rol, estado, fecha_hora, fecha_hora_salida)
-             VALUES (:usuario_id, :nombre_usuario, :rol, 0, NOW(), NULL)'
+            'INSERT INTO login_logs (usuario_id, nombre_usuario, rol, estado, fecha_hora)
+             VALUES (:usuario_id, :nombre_usuario, :rol, 0, NOW())'
         );
         $stmt->execute([
             ':usuario_id' => $usuarioId,
